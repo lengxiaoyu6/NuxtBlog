@@ -1,0 +1,236 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-brand-50: #f8fafc;
+  --color-brand-100: #f1f5f9;
+  --color-brand-200: #e2e8f0;
+  --color-brand-300: #cbd5e1;
+  --color-brand-400: #94a3b8;
+  --color-brand-500: #64748b;
+  --color-brand-600: #475569;
+  --color-brand-700: #334155;
+  --color-brand-800: #1e293b;
+  --color-brand-900: #0f172a;
+  --color-brand-950: #020617;
+
+  /* Alias brand to primary for Nuxt UI */
+  --color-primary-50: var(--color-brand-50);
+  --color-primary-100: var(--color-brand-100);
+  --color-primary-200: var(--color-brand-200);
+  --color-primary-300: var(--color-brand-300);
+  --color-primary-400: var(--color-brand-400);
+  --color-primary-500: var(--color-brand-500);
+  --color-primary-600: var(--color-brand-600);
+  --color-primary-700: var(--color-brand-700);
+  --color-primary-800: var(--color-brand-800);
+  --color-primary-900: var(--color-brand-900);
+  --color-primary-950: var(--color-brand-950);
+
+  /* Gray colors mapped to slate */
+  --color-gray-50: var(--color-slate-50);
+  --color-gray-100: var(--color-slate-100);
+  --color-gray-200: var(--color-slate-200);
+  --color-gray-300: var(--color-slate-300);
+  --color-gray-400: var(--color-slate-400);
+  --color-gray-500: var(--color-slate-500);
+  --color-gray-600: var(--color-slate-600);
+  --color-gray-700: var(--color-slate-700);
+  --color-gray-800: var(--color-slate-800);
+  --color-gray-900: var(--color-slate-900);
+  --color-gray-950: var(--color-slate-950);
+
+  --font-sans: "Inter", "ui-sans-serif", "system-ui", "sans-serif";
+  --font-serif: "Noto Serif SC", "serif";
+  --font-mono: "JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace";
+}
+
+@layer base {
+  body {
+    @apply bg-[#fafafa] text-slate-900 antialiased selection:bg-brand-100 selection:text-brand-900;
+  }
+
+  .dark body {
+    @apply bg-[#050505] text-slate-100 selection:bg-brand-900 selection:text-brand-100;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-white/20 dark:border-slate-800/50;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10;
+  }
+
+  .mesh-gradient {
+    background-image: radial-gradient(
+      circle at 2px 2px,
+      rgba(0, 0, 0, 0.03) 1px,
+      transparent 0
+    );
+    background-size: 32px 32px;
+  }
+
+  .dark .mesh-gradient {
+    background-image: radial-gradient(
+      circle at 2px 2px,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 0
+    );
+    background-size: 32px 32px;
+  }
+
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.015;
+  }
+
+  .dark .bg-noise {
+    opacity: 0.03;
+  }
+
+  .paper-texture {
+    position: relative;
+  }
+
+  .paper-texture::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.02;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .dark .paper-texture::before {
+    opacity: 0.04;
+  }
+
+  .markdown-body {
+    @apply text-slate-700 dark:text-slate-300 leading-relaxed;
+  }
+
+  .markdown-body h2 {
+    @apply text-2xl font-bold text-slate-900 dark:text-white mt-12 mb-6 font-serif;
+  }
+
+  .markdown-body h3 {
+    @apply text-xl font-bold text-slate-900 dark:text-white mt-8 mb-4 font-serif;
+  }
+
+  .markdown-body p {
+    @apply mb-6;
+  }
+
+  .markdown-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 1.5rem auto;
+    border-radius: 1rem;
+  }
+
+  .markdown-body ul {
+    @apply list-disc list-inside mb-6 space-y-2;
+  }
+
+  .markdown-body ol {
+    @apply list-decimal list-inside mb-6 space-y-2;
+  }
+
+  .markdown-body blockquote {
+    @apply border-l-4 border-brand-600 bg-slate-50 dark:bg-slate-800/50 px-6 py-4 my-8 italic rounded-r-xl;
+  }
+
+  .markdown-body pre {
+    @apply bg-slate-900 text-slate-100 p-6 rounded-2xl overflow-x-auto my-8 font-mono text-sm border border-slate-800;
+  }
+
+  .markdown-body code:not(pre code) {
+    @apply bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-400 px-1.5 py-0.5 rounded font-mono text-[0.9em];
+  }
+
+  .markdown-body strong {
+    @apply font-bold text-slate-900 dark:text-white;
+  }
+
+  .content-table-grid .markdown-table-wrap {
+    @apply my-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900/80;
+  }
+
+  .content-table-grid table {
+    @apply min-w-full border-collapse text-sm text-slate-700 dark:text-slate-200;
+  }
+
+  .content-table-grid th {
+    @apply border-r border-b border-slate-200 bg-slate-100/90 px-4 py-3 text-left font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white;
+  }
+
+  .content-table-grid td {
+    @apply border-r border-b border-slate-200 bg-white px-4 py-3 align-top dark:border-slate-700 dark:bg-slate-900/40;
+  }
+
+  .content-table-grid tr > :last-child {
+    @apply border-r-0;
+  }
+
+  .content-table-grid tbody tr:last-child > * {
+    @apply border-b-0;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* 确保动画层始终在最上层 */
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 999;
+}
+
+.dark::view-transition-old(root) {
+  z-index: 999;
+}
+
+.dark::view-transition-new(root) {
+  z-index: 1;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: rgb(226 232 240);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgb(30 41 59);
+}

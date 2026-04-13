@@ -1,0 +1,14 @@
+.git
+.gitignore
+.nuxt
+.output
+node_modules
+storage
+docs
+tests
+.env
+.env.*
+!.env.example
+.worktrees
+.ace-tool
+coverage

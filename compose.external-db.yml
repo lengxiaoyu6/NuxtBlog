@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APT_MIRROR: ""
+        NPM_REGISTRY: ""
+    image: nuxt-blog:latest
+    restart: unless-stopped
+    environment:
+      NUXT_SESSION_PASSWORD: change-this-session-secret
+      DATABASE_URL: mysql://db-user:db-password@db.example.com:3306/nuxt-blog
+    ports:
+      - "3000:3000"
+    volumes:
+      - blog-media:/app/storage/media
+
+volumes:
+  blog-media:
