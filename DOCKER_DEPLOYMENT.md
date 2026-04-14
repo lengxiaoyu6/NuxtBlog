@@ -71,8 +71,8 @@ docker compose -f compose.external-db.yml build
 ### 配置要点
 
 1. 在 `compose.with-db.yml` 中替换以下占位值：
-   `MYSQL_ROOT_PASSWORD`、`MYSQL_PASSWORD`、`NUXT_SESSION_PASSWORD`。
-2. `DATABASE_URL` 已经指向 Compose 内部的 `db` 服务，无需改成宿主机地址。
+   `MYSQL_ROOT_PASSWORD`、`MYSQL_PASSWORD`、`NUXT_SESSION_PASSWORD`（至少 32 个字符）。
+2. `DATABASE_URL` 已经指向 Compose 内部的 `db` 服务，并保留 `?allowPublicKeyRetrieval=true`，以适配 `mysql:8` 默认认证方式，无需改成宿主机地址。
 3. 媒体卷默认挂载到 `/app/storage/media`。
 
 ### 启动命令
@@ -93,7 +93,7 @@ docker compose -f compose.with-db.yml logs -f app
 
 ### 配置要点
 
-1. 在 `compose.external-db.yml` 中替换 `NUXT_SESSION_PASSWORD` 与 `DATABASE_URL`。
+1. 在 `compose.external-db.yml` 中替换 `NUXT_SESSION_PASSWORD` 与 `DATABASE_URL`，其中 `NUXT_SESSION_PASSWORD` 至少 32 个字符。
 2. `DATABASE_URL` 需要填写实际的数据库主机、账号、口令与库名。
 3. 媒体卷默认挂载到 `/app/storage/media`。
 
@@ -130,7 +130,7 @@ docker compose -f compose.with-db.yml exec app pnpm admin:reset-password -- --us
 
 ## 发布前检查
 
-1. `NUXT_SESSION_PASSWORD`、数据库账号、数据库口令与连接串已经替换为正式值。
+1. `NUXT_SESSION_PASSWORD` 已替换为至少 32 个字符的随机字符串，数据库账号、数据库口令与连接串已经替换为正式值。
 2. `docker compose -f <compose-file> up --build -d` 已执行成功。
 3. 媒体卷已经挂载到 `/app/storage/media`，或已按实际目录同步调整卷挂载位置。
 4. `http://<host>:3000/admin/login` 可以打开，默认管理员可以登录并完成首次改密。
