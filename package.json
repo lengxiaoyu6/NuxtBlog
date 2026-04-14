@@ -1,0 +1,47 @@
+{
+  "name": "frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "admin:reset-password": "node scripts/admin-reset-password.mjs",
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "posts:migrate-legacy-ids": "node scripts/migrate-legacy-post-ids.mjs",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "prisma generate && nuxt prepare",
+    "check:main-purity": "node scripts/check-main-purity.mjs",
+    "release:main": "node scripts/release-main.mjs"
+  },
+  "dependencies": {
+    "@adonisjs/hash": "^9.1.1",
+    "@nuxt/ui": "^4.6.0",
+    "@prisma/adapter-mariadb": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "@tiptap/core": "3.22.0",
+    "@tiptap/extension-code-block-lowlight": "3.22.0",
+    "@tiptap/extension-hard-break": "3.22.0",
+    "@tiptap/extension-heading": "3.22.0",
+    "@tiptap/extension-image": "3.22.0",
+    "@tiptap/extension-paragraph": "3.22.0",
+    "@tiptap/extension-text-align": "3.22.0",
+    "highlight.js": "^11.11.1",
+    "lowlight": "^3.3.0",
+    "lucide-vue-next": "^0.542.0",
+    "markdown-it": "^14.1.0",
+    "nuxt": "^4.4.2",
+    "nuxt-auth-utils": "^0.5.29",
+    "vue": "^3.5.30",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.101",
+    "@tailwindcss/typography": "^0.5.16",
+    "@types/markdown-it": "^14.1.2",
+    "@vue/language-core": "^3.1.2",
+    "dotenv": "^17.4.1",
+    "prisma": "^7.6.0",
+    "tailwindcss": "^4.2.2",
+    "vue-tsc": "^3.1.2"
+  }
+}

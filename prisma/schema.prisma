@@ -1,0 +1,447 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SiteSocialIcon {
+  github
+  twitter
+  linkedin
+  mail
+  website
+}
+
+enum ManagedPageKey {
+  about
+  guestbook
+  links
+  projects
+}
+
+enum AboutSkillTheme {
+  blue
+  emerald
+  violet
+  amber
+}
+
+enum FriendLinkStatus {
+  visible
+  hidden
+  pending
+}
+
+enum GuestbookEntryStatus {
+  pending
+  approved
+  rejected
+  spam
+}
+
+enum BlogPostStatus {
+  draft
+  published
+}
+
+enum PostCommentStatus {
+  pending
+  approved
+  rejected
+  spam
+}
+
+enum MediaAssetKind {
+  image
+  document
+}
+
+enum MediaAssetLifecycleStatus {
+  ready
+  uploading
+  failed
+}
+
+enum MediaTagColor {
+  slate
+  blue
+  emerald
+  amber
+  rose
+}
+
+enum MediaAssetUsageType {
+  post_cover
+  post_inline_image
+  post_attachment
+  site_banner
+}
+
+model AdminUser {
+  id                 Int       @id @default(autoincrement())
+  username           String    @unique
+  displayName        String
+  passwordHash       String
+  mustChangePassword Boolean   @default(true)
+  passwordUpdatedAt  DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("admin_users")
+}
+
+model SiteSettings {
+  id                    Int              @id @default(autoincrement())
+  siteCode              String           @unique @map("site_code")
+  siteName              String           @map("site_name")
+  siteUrl               String           @map("site_url")
+  siteDescription       String           @map("site_description")
+  siteLogoUrl           String?          @map("site_logo_url")
+  siteLogoAlt           String           @map("site_logo_alt")
+  ownerName             String           @map("owner_name")
+  ownerAvatarUrl        String?          @map("owner_avatar_url")
+  ownerBio              String           @map("owner_bio")
+  ownerLocation         String?          @map("owner_location")
+  ownerTagline          String?          @map("owner_tagline")
+  friendCardName        String           @map("friend_card_name")
+  friendCardDescription String           @map("friend_card_description")
+  friendCardUrl         String           @map("friend_card_url")
+  friendCardAvatarUrl   String?          @map("friend_card_avatar_url")
+  contactEmail          String           @map("contact_email")
+  footerCopyright       String           @map("footer_copyright")
+  footerIcpText         String?          @map("footer_icp_text")
+  footerIcpLink         String?          @map("footer_icp_link")
+  footerNote            String?          @map("footer_note")
+  socialLinks           SiteSocialLink[]
+  navItems              SiteNavItem[]
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  @@map("site_settings")
+}
+
+model SiteSocialLink {
+  id             String         @id
+  siteSettingsId Int            @map("site_settings_id")
+  siteSettings   SiteSettings   @relation(fields: [siteSettingsId], references: [id], onDelete: Cascade)
+  label          String
+  url            String
+  icon           SiteSocialIcon
+  enabled        Boolean        @default(true)
+  sortOrder      Int            @map("sort_order")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  @@index([siteSettingsId, sortOrder])
+  @@map("site_social_links")
+}
+
+model SiteNavItem {
+  id             String       @id
+  siteSettingsId Int          @map("site_settings_id")
+  siteSettings   SiteSettings @relation(fields: [siteSettingsId], references: [id], onDelete: Cascade)
+  label          String
+  href           String
+  openInNewTab   Boolean      @default(false) @map("open_in_new_tab")
+  enabled        Boolean      @default(true)
+  sortOrder      Int          @map("sort_order")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@index([siteSettingsId, sortOrder])
+  @@map("site_nav_items")
+}
+
+model ManagedPage {
+  id                    Int                   @id @default(autoincrement())
+  pageKey               ManagedPageKey        @unique @map("page_key")
+  enabled               Boolean               @default(true)
+  seoTitle              String                @map("seo_title")
+  seoDescription        String                @map("seo_description")
+  aboutPageSettings     AboutPageSettings?
+  guestbookPageSettings GuestbookPageSettings?
+  linksPageSettings     LinksPageSettings?
+  projectsPageSettings  ProjectsPageSettings?
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+
+  @@map("managed_pages")
+}
+
+model AboutPageSettings {
+  managedPageId       Int              @id @map("managed_page_id")
+  managedPage         ManagedPage      @relation(fields: [managedPageId], references: [id], onDelete: Cascade)
+  introHeading        String           @map("intro_heading")
+  introParagraphsJson Json             @map("intro_paragraphs_json")
+  locationLabel       String?          @map("location_label")
+  skillsEnabled       Boolean          @default(true) @map("skills_enabled")
+  skillsHeading       String           @map("skills_heading")
+  skillCards          AboutSkillCard[]
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+
+  @@map("about_page_settings")
+}
+
+model AboutSkillCard {
+  id          String           @id
+  aboutPageId Int              @map("about_page_id")
+  aboutPage   AboutPageSettings @relation(fields: [aboutPageId], references: [managedPageId], onDelete: Cascade)
+  title       String
+  subtitle    String
+  description String
+  level       Int
+  theme       AboutSkillTheme
+  sortOrder   Int              @map("sort_order")
+  items       AboutSkillItem[]
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@index([aboutPageId, sortOrder])
+  @@map("about_skill_cards")
+}
+
+model AboutSkillItem {
+  id        String         @id
+  cardId    String         @map("card_id")
+  card      AboutSkillCard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  name      String
+  level     Int
+  sortOrder Int            @map("sort_order")
+
+  @@index([cardId, sortOrder])
+  @@map("about_skill_items")
+}
+
+model GuestbookPageSettings {
+  managedPageId              Int         @id @map("managed_page_id")
+  managedPage                ManagedPage @relation(fields: [managedPageId], references: [id], onDelete: Cascade)
+  commentSectionTitle        String      @map("comment_section_title")
+  commentSectionDescription  String?     @map("comment_section_description")
+  updatedAt                  DateTime    @updatedAt @map("updated_at")
+
+  @@map("guestbook_page_settings")
+}
+
+model LinksPageSettings {
+  managedPageId       Int          @id @map("managed_page_id")
+  managedPage         ManagedPage  @relation(fields: [managedPageId], references: [id], onDelete: Cascade)
+  friendCardName      String?      @map("friend_card_name")
+  friendCardDescription String?    @map("friend_card_description")
+  friendCardUrl       String?      @map("friend_card_url")
+  friendCardAvatarUrl String?      @map("friend_card_avatar_url")
+  friendsSectionTitle String       @map("friends_section_title")
+  friendLinks         FriendLink[]
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  @@map("links_page_settings")
+}
+
+model FriendLink {
+  id          String           @id
+  linksPageId Int              @map("links_page_id")
+  linksPage   LinksPageSettings @relation(fields: [linksPageId], references: [managedPageId], onDelete: Cascade)
+  name        String
+  url         String
+  description String
+  avatarUrl   String           @map("avatar_url")
+  contact     String?          @map("contact")
+  status      FriendLinkStatus
+  sortOrder   Int              @map("sort_order")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@index([linksPageId, sortOrder])
+  @@index([linksPageId, status])
+  @@map("friend_links")
+}
+
+model ProjectsPageSettings {
+  managedPageId         Int             @id @map("managed_page_id")
+  managedPage           ManagedPage     @relation(fields: [managedPageId], references: [id], onDelete: Cascade)
+  projectsSectionTitle  String          @map("projects_section_title")
+  emptyStateTitle       String          @map("empty_state_title")
+  emptyStateDescription String          @map("empty_state_description")
+  projects              ManagedProject[]
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  @@map("projects_page_settings")
+}
+
+model ManagedProject {
+  id             String               @id
+  projectsPageId Int                  @map("projects_page_id")
+  projectsPage   ProjectsPageSettings @relation(fields: [projectsPageId], references: [managedPageId], onDelete: Cascade)
+  title          String
+  description    String
+  image          String?
+  category       String?
+  tagsJson       Json                 @map("tags_json")
+  githubUrl      String?              @map("github_url")
+  demoUrl        String?              @map("demo_url")
+  enabled        Boolean              @default(true)
+  sortOrder      Int                  @map("sort_order")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+
+  @@index([projectsPageId, sortOrder])
+  @@map("managed_projects")
+}
+
+model GuestbookEntry {
+  id              String               @id @default(cuid())
+  parentId        String?              @map("parent_id")
+  parent          GuestbookEntry?      @relation("GuestbookEntryReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies         GuestbookEntry[]     @relation("GuestbookEntryReplies")
+  authorName      String               @map("author_name")
+  authorEmail     String               @map("author_email")
+  authorAvatarUrl String               @map("author_avatar_url")
+  authorRegion    String               @map("author_region")
+  content         String
+  status          GuestbookEntryStatus @default(pending)
+  submittedAt     DateTime             @map("submitted_at")
+  reviewedAt      DateTime?            @map("reviewed_at")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  @@index([parentId, submittedAt])
+  @@index([status, submittedAt])
+  @@index([createdAt])
+  @@map("guestbook_entries")
+}
+
+model BlogPost {
+  id              Int            @id @default(autoincrement())
+  slug            String?        @unique
+  title           String
+  excerpt         String
+  contentMarkdown String         @db.LongText @map("content_markdown")
+  coverImageUrl   String?        @map("cover_image_url")
+  category        String
+  tagsJson        Json           @map("tags_json")
+  status          BlogPostStatus
+  readTimeText    String         @map("read_time_text")
+  isPinned        Boolean        @default(false) @map("is_pinned")
+  viewsCount      Int            @default(0) @map("views_count")
+  likesCount      Int            @default(0) @map("likes_count")
+  commentsCount   Int            @default(0) @map("comments_count")
+  publishedAt     DateTime?      @map("published_at")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  comments        PostComment[]
+
+  @@index([status, publishedAt])
+  @@index([category, status, publishedAt])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@map("blog_posts")
+}
+
+model BlogPostCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([sortOrder, createdAt])
+  @@map("blog_post_categories")
+}
+
+model PostComment {
+  id              String            @id @default(cuid())
+  postId          Int               @map("post_id")
+  parentId        String?           @map("parent_id")
+  parent          PostComment?      @relation("PostCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies         PostComment[]     @relation("PostCommentReplies")
+  authorName      String            @db.VarChar(24) @map("author_name")
+  authorEmail     String            @db.VarChar(320) @map("author_email")
+  authorAvatarUrl String            @db.VarChar(255) @map("author_avatar_url")
+  authorRegion    String            @db.VarChar(64) @map("author_region")
+  content         String            @db.Text
+  status          PostCommentStatus @default(pending)
+  submittedAt     DateTime          @map("submitted_at")
+  reviewedAt      DateTime?         @map("reviewed_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  post            BlogPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, status, submittedAt])
+  @@index([status, submittedAt])
+  @@map("post_comments")
+}
+
+model MediaFolder {
+  id        String        @id
+  name      String
+  parentId  String?       @map("parent_id")
+  parent    MediaFolder?  @relation("MediaFolderTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children  MediaFolder[] @relation("MediaFolderTree")
+  sortOrder Int           @default(0) @map("sort_order")
+  assets    MediaAsset[]
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@index([parentId, sortOrder])
+  @@map("media_folders")
+}
+
+model MediaTag {
+  id        String         @id
+  name      String
+  color     MediaTagColor
+  sortOrder Int            @default(0) @map("sort_order")
+  assets    MediaAssetTag[]
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  @@index([sortOrder])
+  @@map("media_tags")
+}
+
+model MediaAsset {
+  id          String                    @id @default(cuid())
+  name        String
+  originalName String                   @map("original_name")
+  kind        MediaAssetKind
+  extension   String
+  mimeType    String                    @map("mime_type")
+  size        Int
+  width       Int?
+  height      Int?
+  storageKey  String                    @map("storage_key")
+  status      MediaAssetLifecycleStatus @default(ready)
+  folderId    String                    @map("folder_id")
+  folder      MediaFolder               @relation(fields: [folderId], references: [id], onDelete: Restrict)
+  tags        MediaAssetTag[]
+  usage       MediaAssetUsage[]
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+
+  @@index([folderId, updatedAt])
+  @@index([kind, updatedAt])
+  @@map("media_assets")
+}
+
+model MediaAssetTag {
+  assetId String     @map("asset_id")
+  tagId   String     @map("tag_id")
+  asset   MediaAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  tag     MediaTag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([assetId, tagId])
+  @@index([tagId, assetId])
+  @@map("media_asset_tags")
+}
+
+model MediaAssetUsage {
+  id          String              @id
+  assetId     String              @map("asset_id")
+  type        MediaAssetUsageType
+  targetId    String              @map("target_id")
+  targetTitle String              @map("target_title")
+  updatedAt   DateTime            @map("updated_at")
+  asset       MediaAsset          @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, updatedAt])
+  @@map("media_asset_usage")
+}

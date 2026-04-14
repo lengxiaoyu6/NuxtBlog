@@ -1,0 +1,43 @@
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: change-this-root-password
+      MYSQL_DATABASE: nuxt-blog
+      MYSQL_USER: nuxtblog
+      MYSQL_PASSWORD: change-this-db-password
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pchange-this-root-password"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APT_MIRROR: ""
+        NPM_REGISTRY: ""
+    image: nuxt-blog:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NUXT_SESSION_PASSWORD: change-this-session-secret
+      DATABASE_URL: mysql://nuxtblog:change-this-db-password@db:3306/nuxt-blog?allowPublicKeyRetrieval=true
+    ports:
+      - "3000:3000"
+    volumes:
+      - blog-media:/app/storage/media
+
+volumes:
+  mysql-data:
+  blog-media:
