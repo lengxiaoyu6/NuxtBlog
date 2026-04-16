@@ -19,6 +19,8 @@ export default defineNuxtConfig({
     },
     databaseUrl: process.env.DATABASE_URL || 'mysql://root:password@127.0.0.1:3306/nuxt-blog',
     mediaStorageDir: process.env.MEDIA_STORAGE_DIR || 'storage/media',
+    securityHashSalt: process.env.SECURITY_HASH_SALT || '',
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
     public: {},
   },
   routeRules: {

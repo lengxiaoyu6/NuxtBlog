@@ -1,6 +1,11 @@
 import type { H3Event } from 'h3';
 import type { AdminSettingsForm } from '../../app/types/admin-settings';
-import { readPublicSiteSettings, readSiteSettings, saveSiteSettings } from '../services/site-settings.service';
+import {
+  readPublicSecurityConfig,
+  readPublicSiteSettings,
+  readSiteSettings,
+  saveSiteSettings,
+} from '../services/site-settings.service';
 import { requireAdminSession } from '../utils/require-admin-session';
 
 export const siteSettingsController = {
@@ -15,5 +20,8 @@ export const siteSettingsController = {
   },
   async getPublicSiteSettings() {
     return await readPublicSiteSettings();
+  },
+  async getPublicSecurityConfig() {
+    return await readPublicSecurityConfig();
   },
 };

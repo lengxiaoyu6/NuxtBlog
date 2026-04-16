@@ -69,6 +69,22 @@
             </div>
           </div>
 
+          <div
+            v-if="loginCaptchaEnabled"
+            class="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/40"
+          >
+            <p class="mb-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+              当前登录通道已启用人机校验。
+            </p>
+            <TurnstileWidget
+              v-model="turnstileToken"
+              :enabled="loginCaptchaEnabled"
+              :site-key="securityConfig.turnstileSiteKey"
+              :reset-nonce="captchaResetNonce"
+              @error="loginError = $event"
+            />
+          </div>
+
           <p
             v-if="loginError"
             class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
@@ -94,7 +110,7 @@
           </div>
         </form>
       </div>
-      
+
       <div class="mt-8 text-center">
         <NuxtLink to="/" class="text-sm font-medium text-slate-500 hover:text-brand-600 dark:text-slate-400 transition-colors flex items-center justify-center gap-1">
           <ArrowLeft :size="14" />
@@ -107,15 +123,20 @@
 
 <script setup lang="ts">
 import { LayoutDashboard, User, Lock, ArrowRight, Loader2, ArrowLeft } from 'lucide-vue-next';
-import type { AdminSessionUser } from '~/../shared/types/auth';
+import type { AdminSessionUser } from '~~/shared/types/auth';
+import { isCaptchaRequired } from '~/utils/security-form';
 
 definePageMeta({
   layout: false,
 });
 
 const { fetchSiteSettings } = useSiteSettings();
+const { securityConfig, fetchSecurityPublicConfig } = useSecurityPublicConfig();
 
-await fetchSiteSettings();
+await Promise.all([
+  fetchSiteSettings(),
+  fetchSecurityPublicConfig(),
+]);
 
 useSitePageTitle('后台登录');
 
@@ -129,7 +150,10 @@ const route = useRoute();
 const { user: userSession, fetch: fetchUserSession } = useUserSession();
 const loading = ref(false);
 const loginError = ref('');
+const turnstileToken = ref('');
+const captchaResetNonce = ref(0);
 const sessionUser = computed(() => userSession.value as AdminSessionUser | null | undefined);
+const loginCaptchaEnabled = computed(() => isCaptchaRequired('login', securityConfig.value));
 
 const redirectPath = computed(() => {
   const redirect = route.query.redirect;
@@ -149,9 +173,24 @@ function resolveLoginError(error: unknown) {
   return maybeError.data?.statusMessage || maybeError.data?.message || maybeError.statusMessage || maybeError.message || '登录失败，请稍后重试。';
 }
 
+function resetCaptcha() {
+  turnstileToken.value = '';
+  captchaResetNonce.value += 1;
+}
+
 async function handleLogin() {
-  loading.value = true;
+  if (loading.value) {
+    return;
+  }
+
   loginError.value = '';
+
+  if (loginCaptchaEnabled.value && !turnstileToken.value.trim()) {
+    loginError.value = '请先完成人机校验。';
+    return;
+  }
+
+  loading.value = true;
 
   try {
     await $fetch('/api/auth/login', {
@@ -159,6 +198,7 @@ async function handleLogin() {
       body: {
         username: form.username,
         password: form.password,
+        turnstileToken: turnstileToken.value || undefined,
       },
     });
 
@@ -170,9 +210,15 @@ async function handleLogin() {
     }
 
     await navigateTo(redirectPath.value);
-  } catch (error) {
+  }
+  catch (error) {
     loginError.value = resolveLoginError(error);
-  } finally {
+
+    if (loginCaptchaEnabled.value) {
+      resetCaptcha();
+    }
+  }
+  finally {
     loading.value = false;
   }
 }

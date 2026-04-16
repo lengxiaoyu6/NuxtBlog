@@ -6,6 +6,7 @@ export interface FriendLinkApplicationSubmitInput {
   avatarUrl: string;
   contact: string;
   description: string;
+  turnstileToken?: string;
 }
 
 export interface AdminFriendLinkSaveInput {
@@ -14,5 +15,6 @@ export interface AdminFriendLinkSaveInput {
   avatarUrl: string;
   contact?: string;
   description: string;
+  turnstileToken?: string;
   status: FriendLinkRecordStatus;
 }

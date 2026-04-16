@@ -114,6 +114,8 @@ model SiteSettings {
   footerIcpText         String?          @map("footer_icp_text")
   footerIcpLink         String?          @map("footer_icp_link")
   footerNote            String?          @map("footer_note")
+  turnstileSiteKey      String?          @map("turnstile_site_key")
+  securitySettingsJson  Json?            @map("security_settings_json")
   socialLinks           SiteSocialLink[]
   navItems              SiteNavItem[]
   createdAt             DateTime         @default(now()) @map("created_at")
@@ -444,4 +446,31 @@ model MediaAssetUsage {
 
   @@index([assetId, updatedAt])
   @@map("media_asset_usage")
+}
+
+model SecurityThrottleState {
+  id              Int       @id @default(autoincrement())
+  action          String
+  dimension       String
+  subjectHash     String    @map("subject_hash")
+  hits            Int       @default(0)
+  windowStartedAt DateTime  @map("window_started_at")
+  blockedUntil    DateTime? @map("blocked_until")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@unique([action, dimension, subjectHash], map: "security_throttle_action_dimension_subject_hash_key")
+  @@index([action, dimension, blockedUntil])
+  @@map("security_throttle_states")
+}
+
+model SecurityAlert {
+  id           Int       @id @default(autoincrement())
+  dedupeKey    String    @unique @map("dedupe_key")
+  dimension    String
+  blockedUntil DateTime? @map("blocked_until")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([dimension, createdAt])
+  @@map("security_alerts")
 }

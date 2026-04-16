@@ -3,6 +3,7 @@ export interface GuestbookEntrySubmitInput {
   authorName: string;
   authorEmail: string;
   content: string;
+  turnstileToken?: string;
 }
 
 export interface GuestbookStatusUpdateInput {

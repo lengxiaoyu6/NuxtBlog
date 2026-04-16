@@ -113,6 +113,16 @@
       <button
         type="button"
         class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
+        :class="activeTab === 'security'
+          ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
+          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+        @click="activeTab = 'security'"
+      >
+        安全策略
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
         :class="activeTab === 'footer'
           ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
           : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
@@ -567,7 +577,227 @@
       </section>
     </div>
 
-    <div v-else class="space-y-8">
+    <div v-else-if="activeTab === 'security'" class="space-y-8">
+      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <div class="mb-6 flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
+            <ShieldCheck :size="22" />
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-slate-900 dark:text-white">安全策略</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">维护公开接口的人机校验、限流与登录保护参数。</p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label for="security-turnstile-site-key" class="text-sm font-bold text-slate-900 dark:text-white">Turnstile Site Key</label>
+          <input
+            id="security-turnstile-site-key"
+            v-model="form.security.turnstileSiteKey"
+            type="text"
+            placeholder="填写 Cloudflare Turnstile Site Key"
+            class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
+            :class="getInputClass('security', 'turnstileSiteKey')"
+          >
+          <div class="flex items-center justify-between gap-3 text-xs">
+            <span class="text-slate-400">登录、评论、留言或友链申请启用人机校验时需要填写。</span>
+            <span class="text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'turnstileSiteKey') }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <div class="mb-6 flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
+            <ShieldCheck :size="22" />
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-slate-900 dark:text-white">登录保护</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">控制后台登录的人机校验、失败次数与冷却时间。</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+            <input v-model="form.security.login.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+            启用登录人机校验
+          </label>
+
+          <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div class="space-y-2">
+              <label for="security-login-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+              <input id="security-login-window" v-model.number="form.security.login.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.rateLimit.windowSeconds')">
+              <p v-if="getFieldError('security', 'login.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.rateLimit.windowSeconds') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+              <input id="security-login-ip" v-model.number="form.security.login.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.rateLimit.maxPerIp')">
+              <p v-if="getFieldError('security', 'login.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.rateLimit.maxPerIp') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+              <input id="security-login-session" v-model.number="form.security.login.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.rateLimit.maxPerSession')">
+              <p v-if="getFieldError('security', 'login.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.rateLimit.maxPerSession') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-failures" class="text-sm font-bold text-slate-900 dark:text-white">失败次数上限</label>
+              <input id="security-login-failures" v-model.number="form.security.login.maxFailures" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.maxFailures')">
+              <p v-if="getFieldError('security', 'login.maxFailures')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.maxFailures') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-cooldown" class="text-sm font-bold text-slate-900 dark:text-white">冷却时间</label>
+              <input id="security-login-cooldown" v-model.number="form.security.login.cooldownSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.cooldownSeconds')">
+              <p v-if="getFieldError('security', 'login.cooldownSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.cooldownSeconds') }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid gap-6 xl:grid-cols-2">
+        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">评论提交</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制公开评论接口的校验与频率。</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+              <input v-model="form.security.comments.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+              启用评论人机校验
+            </label>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label for="security-comments-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+                <input id="security-comments-window" v-model.number="form.security.comments.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'comments.rateLimit.windowSeconds')">
+                <p v-if="getFieldError('security', 'comments.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'comments.rateLimit.windowSeconds') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-comments-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+                <input id="security-comments-ip" v-model.number="form.security.comments.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'comments.rateLimit.maxPerIp')">
+                <p v-if="getFieldError('security', 'comments.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'comments.rateLimit.maxPerIp') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-comments-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+                <input id="security-comments-session" v-model.number="form.security.comments.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'comments.rateLimit.maxPerSession')">
+                <p v-if="getFieldError('security', 'comments.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'comments.rateLimit.maxPerSession') }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">留言提交</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制留言接口的校验与频率。</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+              <input v-model="form.security.guestbook.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+              启用留言人机校验
+            </label>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label for="security-guestbook-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+                <input id="security-guestbook-window" v-model.number="form.security.guestbook.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'guestbook.rateLimit.windowSeconds')">
+                <p v-if="getFieldError('security', 'guestbook.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'guestbook.rateLimit.windowSeconds') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-guestbook-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+                <input id="security-guestbook-ip" v-model.number="form.security.guestbook.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'guestbook.rateLimit.maxPerIp')">
+                <p v-if="getFieldError('security', 'guestbook.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'guestbook.rateLimit.maxPerIp') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-guestbook-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+                <input id="security-guestbook-session" v-model.number="form.security.guestbook.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'guestbook.rateLimit.maxPerSession')">
+                <p v-if="getFieldError('security', 'guestbook.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'guestbook.rateLimit.maxPerSession') }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">友链申请</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制友链申请接口的校验与频率。</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+              <input v-model="form.security.linkApplications.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+              启用友链申请人机校验
+            </label>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label for="security-links-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+                <input id="security-links-window" v-model.number="form.security.linkApplications.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'linkApplications.rateLimit.windowSeconds')">
+                <p v-if="getFieldError('security', 'linkApplications.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'linkApplications.rateLimit.windowSeconds') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-links-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+                <input id="security-links-ip" v-model.number="form.security.linkApplications.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'linkApplications.rateLimit.maxPerIp')">
+                <p v-if="getFieldError('security', 'linkApplications.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'linkApplications.rateLimit.maxPerIp') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-links-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+                <input id="security-links-session" v-model.number="form.security.linkApplications.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'linkApplications.rateLimit.maxPerSession')">
+                <p v-if="getFieldError('security', 'linkApplications.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'linkApplications.rateLimit.maxPerSession') }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">点赞提交</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制公开点赞接口的访问频率。</p>
+            </div>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-3">
+            <div class="space-y-2">
+              <label for="security-likes-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+              <input id="security-likes-window" v-model.number="form.security.likes.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'likes.rateLimit.windowSeconds')">
+              <p v-if="getFieldError('security', 'likes.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'likes.rateLimit.windowSeconds') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-likes-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+              <input id="security-likes-ip" v-model.number="form.security.likes.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'likes.rateLimit.maxPerIp')">
+              <p v-if="getFieldError('security', 'likes.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'likes.rateLimit.maxPerIp') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-likes-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+              <input id="security-likes-session" v-model.number="form.security.likes.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'likes.rateLimit.maxPerSession')">
+              <p v-if="getFieldError('security', 'likes.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'likes.rateLimit.maxPerSession') }}</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+
+    <div v-else-if="activeTab === 'footer'" class="space-y-8">
       <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300">
@@ -723,6 +953,7 @@ import {
   UserRound,
 } from 'lucide-vue-next';
 import { cloneSiteSettings } from '~/constants/site-settings';
+import { validateSecuritySettingsForm } from '~/utils/security-form';
 import { useAppToast } from '~/composables/useAppToast';
 import { useSiteSettings } from '~/composables/useSiteSettings';
 import type {
@@ -739,6 +970,7 @@ interface SettingsFieldErrors {
   site: Partial<Record<keyof AdminSettingsForm['site'], string>>;
   owner: Partial<Record<keyof AdminSettingsForm['owner'], string>>;
   footer: Partial<Record<keyof AdminSettingsForm['footer'], string>>;
+  security: Record<string, string>;
 }
 
 const availableSocialIcons = [
@@ -757,7 +989,7 @@ await fetchSiteSettings({ admin: true });
 const initialSettings = cloneSiteSettings(settings.value);
 const form = ref<AdminSettingsForm>(cloneSiteSettings(initialSettings));
 const savedSnapshot = ref<AdminSettingsForm>(cloneSiteSettings(initialSettings));
-const activeTab = ref<'site' | 'owner' | 'socialLinks' | 'navItems' | 'footer'>('site');
+const activeTab = ref<'site' | 'owner' | 'socialLinks' | 'navItems' | 'security' | 'footer'>('site');
 const saveState = ref<AdminSettingsSaveState>('saved');
 const fieldErrors = ref<SettingsFieldErrors>(createEmptyFieldErrors());
 const uploadError = ref({
@@ -787,6 +1019,10 @@ const currentTabDescription = computed(() => {
 
   if (activeTab.value === 'navItems') {
     return '维护顶部导航项的名称、顺序、地址与打开方式。';
+  }
+
+  if (activeTab.value === 'security') {
+    return '维护登录、评论、留言、友链申请与点赞接口的安全策略。';
   }
 
   return '维护联系邮箱、版权文案、备案信息与补充说明。';
@@ -867,6 +1103,7 @@ function createEmptyFieldErrors(): SettingsFieldErrors {
     site: {},
     owner: {},
     footer: {},
+    security: {},
   };
 }
 
@@ -944,6 +1181,8 @@ function validateForm() {
   if (!validateTextLength(form.value.footer.note, 140)) {
     nextErrors.footer.note = '补充说明需控制在 140 个字符以内';
   }
+
+  nextErrors.security = validateSecuritySettingsForm(form.value.security);
 
   fieldErrors.value = nextErrors;
   return Object.values(nextErrors).every((group) => Object.keys(group).length === 0);

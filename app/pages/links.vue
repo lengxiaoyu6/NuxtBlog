@@ -207,6 +207,14 @@
                   </div>
                 </div>
 
+                <TurnstileWidget
+                  v-model="turnstileToken"
+                  :enabled="captchaEnabled"
+                  :site-key="securityConfig.turnstileSiteKey"
+                  :reset-nonce="captchaResetNonce"
+                  @error="handleCaptchaError"
+                />
+
                 <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4">
                   <div class="space-y-2">
                     <div class="flex items-center gap-2 text-xs text-slate-400">
@@ -311,15 +319,19 @@ import {
   Copy,
   Check,
 } from 'lucide-vue-next';
+import { isCaptchaRequired } from '~/utils/security-form';
 
 const isSubmitting = ref(false);
 const isSuccess = ref(false);
 const copiedLabel = ref('');
 const submissionMessage = ref('');
 const submissionTone = ref<'success' | 'error'>('success');
+const turnstileToken = ref('');
+const captchaResetNonce = ref(0);
 const toast = useToast();
 const { settings } = useSiteSettings();
 const { pageSettings } = usePageSettings();
+const { securityConfig, fetchSecurityPublicConfig } = useSecurityPublicConfig();
 
 const LINKS_PAGE_COPY = {
   applyBadgeText: '申请友链',
@@ -350,6 +362,7 @@ const { fetchSiteSettings } = useSiteSettings();
 await Promise.all([
   fetchPageSettings(),
   fetchSiteSettings(),
+  fetchSecurityPublicConfig(),
 ]);
 
 if (!pageSettings.value.links.enabled) {
@@ -357,6 +370,7 @@ if (!pageSettings.value.links.enabled) {
 }
 
 const page = computed(() => pageSettings.value.links);
+const captchaEnabled = computed(() => isCaptchaRequired('linkApplication', securityConfig.value));
 
 useSitePageTitle(() => page.value.seo.title || '友情链接');
 
@@ -430,21 +444,52 @@ function scrollToForm() {
   }
 }
 
+function resetCaptcha() {
+  turnstileToken.value = '';
+  captchaResetNonce.value += 1;
+}
+
+function ensureCaptchaReady() {
+  if (!captchaEnabled.value || turnstileToken.value.trim()) {
+    return true;
+  }
+
+  submissionTone.value = 'error';
+  submissionMessage.value = '请先完成人机校验。';
+  toast.add({
+    title: '请先完成人机校验。',
+    color: 'warning',
+    duration: 2500,
+  });
+  return false;
+}
+
+function handleCaptchaError(message: string) {
+  submissionTone.value = 'error';
+  submissionMessage.value = message;
+}
+
 async function handleSubmit() {
   submissionMessage.value = '';
   submissionTone.value = 'success';
   isSuccess.value = false;
+
+  if (!ensureCaptchaReady()) {
+    return;
+  }
+
   isSubmitting.value = true;
 
   try {
     const response = await $fetch<{ ok: true; message: string }>('/api/links/applications', {
       method: 'POST',
       body: {
-        name: formData.value.name,
-        url: formData.value.url,
-        avatarUrl: formData.value.avatarUrl,
-        contact: formData.value.contact,
-        description: formData.value.description,
+        name: formData.value.name.trim(),
+        url: formData.value.url.trim(),
+        avatarUrl: formData.value.avatarUrl.trim(),
+        contact: formData.value.contact.trim(),
+        description: formData.value.description.trim(),
+        turnstileToken: captchaEnabled.value ? turnstileToken.value || undefined : undefined,
       },
     });
 
@@ -476,6 +521,10 @@ async function handleSubmit() {
   }
   finally {
     isSubmitting.value = false;
+
+    if (captchaEnabled.value) {
+      resetCaptcha();
+    }
   }
 }
 </script>

@@ -5,6 +5,7 @@ export interface PostCommentSubmitInput {
   authorName: string;
   authorEmail: string;
   content: string;
+  turnstileToken?: string;
 }
 
 export interface AdminPostCommentListQuery {
