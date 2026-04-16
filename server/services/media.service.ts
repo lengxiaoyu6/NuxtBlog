@@ -30,6 +30,7 @@ import {
   replaceMediaAssetTagRecords,
   updateMediaAssetFileRecord,
   updateMediaAssetNameRecord,
+  updateMediaAssetStatusRecord,
   updateMediaFolderNameRecord,
 } from '../repositories/media.repository';
 import {
@@ -39,7 +40,13 @@ import {
   readMediaStorageFile,
   writeMediaStorageFile,
 } from './media-storage.service';
+import {
+  normalizeUploadedMediaFile,
+  validateStoredMediaContent,
+} from './media-security.service';
 import { formatDateTimeInShanghai } from './post.logic.mjs';
+import sharp from 'sharp';
+import { zipSync } from 'fflate';
 
 interface UploadedMediaFile {
   filename: string;
@@ -47,10 +54,6 @@ interface UploadedMediaFile {
   data: Buffer;
 }
 
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024;
-const ALLOWED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'avif'];
-const ALLOWED_DOCUMENT_EXTENSIONS = ['pdf', 'docx', 'zip'];
 const DEFAULT_IMAGE_TAG_ID = 'tag-inline';
 const DEFAULT_DOCUMENT_TAG_ID = 'tag-attachment';
 
@@ -85,42 +88,42 @@ const seedTags = [
 const seedAssets = [
   {
     id: 'asset-hero-grid',
-    name: 'nuxt-hero-grid.svg',
+    name: 'nuxt-hero-grid.png',
     kind: 'image',
-    extension: 'svg',
-    mimeType: 'image/svg+xml',
+    extension: 'png',
+    mimeType: 'image/png',
     folderId: 'homepage-assets',
     tagIds: ['tag-banner'],
     createdAt: '2026-04-04 10:18',
     usage: [
       { id: 'usage-hero-grid', type: 'site-banner', targetTitle: '首页 Hero', updatedAt: '2026-04-04 10:18' },
     ],
-    content: createSeedImageSvg('Nuxt Hero Grid', '#0ea5e9'),
+    svgContent: createSeedImageSvg('Nuxt Hero Grid', '#0ea5e9'),
     width: 1600,
     height: 900,
   },
   {
     id: 'asset-cover-minimal',
-    name: 'minimal-dashboard-cover.svg',
+    name: 'minimal-dashboard-cover.png',
     kind: 'image',
-    extension: 'svg',
-    mimeType: 'image/svg+xml',
+    extension: 'png',
+    mimeType: 'image/png',
     folderId: 'post-assets',
     tagIds: ['tag-cover'],
     createdAt: '2026-04-03 14:20',
     usage: [
       { id: 'usage-cover-minimal', type: 'post-cover', targetTitle: '极简后台设计观察', updatedAt: '2026-04-03 14:20' },
     ],
-    content: createSeedImageSvg('Minimal Dashboard Cover', '#2563eb'),
+    svgContent: createSeedImageSvg('Minimal Dashboard Cover', '#2563eb'),
     width: 1600,
     height: 900,
   },
   {
     id: 'asset-inline-color',
-    name: 'color-system-inline.svg',
+    name: 'color-system-inline.png',
     kind: 'image',
-    extension: 'svg',
-    mimeType: 'image/svg+xml',
+    extension: 'png',
+    mimeType: 'image/png',
     folderId: 'post-assets',
     tagIds: ['tag-inline'],
     createdAt: '2026-04-02 12:10',
@@ -128,21 +131,21 @@ const seedAssets = [
       { id: 'usage-inline-color', type: 'post-inline-image', targetTitle: 'Tailwind 色彩体系拆解', updatedAt: '2026-04-02 12:10' },
       { id: 'usage-inline-color-2', type: 'post-inline-image', targetTitle: '组件视觉层次整理', updatedAt: '2026-04-05 08:55' },
     ],
-    content: createSeedImageSvg('Color System Inline', '#14b8a6'),
+    svgContent: createSeedImageSvg('Color System Inline', '#14b8a6'),
     width: 1600,
     height: 900,
   },
   {
     id: 'asset-avatar-kit',
-    name: 'author-avatar-kit.svg',
+    name: 'author-avatar-kit.png',
     kind: 'image',
-    extension: 'svg',
-    mimeType: 'image/svg+xml',
+    extension: 'png',
+    mimeType: 'image/png',
     folderId: 'all-assets',
     tagIds: ['tag-inline'],
     createdAt: '2026-03-28 09:32',
     usage: [],
-    content: createSeedImageSvg('Author Avatar Kit', '#475569'),
+    svgContent: createSeedImageSvg('Author Avatar Kit', '#475569'),
     width: 1600,
     height: 900,
   },
@@ -158,7 +161,7 @@ const seedAssets = [
     usage: [
       { id: 'usage-pdf-kit', type: 'post-attachment', targetTitle: '设计系统文档下载', updatedAt: '2026-04-01 16:00' },
     ],
-    content: Buffer.from('%PDF-1.4\n% Demo handbook placeholder\n', 'utf8'),
+    content: createSeedPdfDocument('Design System Handbook'),
   },
   {
     id: 'asset-doc-checklist',
@@ -170,7 +173,7 @@ const seedAssets = [
     tagIds: ['tag-attachment'],
     createdAt: '2026-03-31 11:42',
     usage: [],
-    content: Buffer.from('Editor checklist placeholder', 'utf8'),
+    content: createSeedDocxDocument('Editor Review Checklist'),
   },
   {
     id: 'asset-zip-kit',
@@ -184,7 +187,7 @@ const seedAssets = [
     usage: [
       { id: 'usage-zip-kit', type: 'post-attachment', targetTitle: '品牌素材打包', updatedAt: '2026-03-29 17:25' },
     ],
-    content: Buffer.from('PK\u0003\u0004 demo zip placeholder', 'utf8'),
+    content: createSeedZipDocument('Brand Assets'),
   },
 ] as const;
 
@@ -195,55 +198,93 @@ function createSeedImageSvg(title: string, color: string) {
   );
 }
 
+function createSeedPdfDocument(title: string) {
+  return Buffer.from(
+    `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Count 1 /Kids [3 0 R] >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << >> >>
+endobj
+4 0 obj
+<< /Length 56 >>
+stream
+BT
+/F1 24 Tf
+72 720 Td
+(${title}) Tj
+ET
+endstream
+endobj
+trailer
+<< /Root 1 0 R >>
+%%EOF`,
+    'utf8'
+  );
+}
+
+function createSeedDocxDocument(title: string) {
+  return Buffer.from(zipSync({
+    '[Content_Types].xml': Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`,
+      'utf8'
+    ),
+    '_rels/.rels': Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`,
+      'utf8'
+    ),
+    'word/document.xml': Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:r>
+        <w:t>${title}</w:t>
+      </w:r>
+    </w:p>
+  </w:body>
+</w:document>`,
+      'utf8'
+    ),
+  }));
+}
+
+function createSeedZipDocument(title: string) {
+  return Buffer.from(zipSync({
+    'README.txt': Buffer.from(`${title}\n`, 'utf8'),
+  }));
+}
+
+async function renderSeedImagePng(svgContent: Buffer) {
+  const { data, info } = await sharp(svgContent)
+    .png()
+    .toBuffer({ resolveWithObject: true });
+
+  return {
+    data,
+    width: info.width,
+    height: info.height,
+  };
+}
+
 function parseSeedDateTime(value: string) {
   return new Date(`${value.replace(' ', 'T')}:00+08:00`);
 }
 
 function normalizeText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
-}
-
-function extractExtension(filename: string) {
-  return filename.split('.').pop()?.trim().toLowerCase() ?? '';
-}
-
-function detectKind(filename: string, mimeType: string) {
-  if (mimeType.startsWith('image/')) {
-    return 'image' as const;
-  }
-
-  const extension = extractExtension(filename);
-  if (ALLOWED_IMAGE_EXTENSIONS.includes(extension)) {
-    return 'image' as const;
-  }
-
-  return 'document' as const;
-}
-
-function validateUploadFile(file: UploadedMediaFile) {
-  const extension = extractExtension(file.filename);
-  const kind = detectKind(file.filename, file.mimeType);
-
-  if (kind === 'image' && file.data.length > MAX_IMAGE_SIZE) {
-    throw createError({ statusCode: 400, statusMessage: '图片大小不能超过 10 MB' });
-  }
-
-  if (kind === 'document' && file.data.length > MAX_DOCUMENT_SIZE) {
-    throw createError({ statusCode: 400, statusMessage: '文档大小不能超过 10 MB' });
-  }
-
-  if (kind === 'image' && !ALLOWED_IMAGE_EXTENSIONS.includes(extension)) {
-    throw createError({ statusCode: 400, statusMessage: '当前图片格式暂不支持' });
-  }
-
-  if (kind === 'document' && !ALLOWED_DOCUMENT_EXTENSIONS.includes(extension)) {
-    throw createError({ statusCode: 400, statusMessage: '当前文档格式暂不支持' });
-  }
-
-  return {
-    kind,
-    extension,
-  };
 }
 
 function toMediaTag(record: Awaited<ReturnType<typeof readMediaTagRecords>>[number]): MediaTag {
@@ -366,8 +407,15 @@ export async function ensureSeedMediaLibrary() {
   })));
 
   for (const asset of seedAssets) {
+    const seedFile = asset.kind === 'image'
+      ? await renderSeedImagePng(asset.svgContent)
+      : {
+          data: asset.content,
+          width: undefined,
+          height: undefined,
+        };
     const storageKey = `seed/${asset.id}.${asset.extension}`;
-    await writeMediaStorageFile(storageKey, asset.content);
+    await writeMediaStorageFile(storageKey, seedFile.data);
 
     const createdAt = parseSeedDateTime(asset.createdAt);
     await createMediaAssetRecord({
@@ -377,9 +425,9 @@ export async function ensureSeedMediaLibrary() {
       kind: asset.kind,
       extension: asset.extension,
       mimeType: asset.mimeType,
-      size: asset.content.length,
-      width: asset.kind === 'image' ? asset.width : undefined,
-      height: asset.kind === 'image' ? asset.height : undefined,
+      size: seedFile.data.length,
+      width: asset.kind === 'image' ? seedFile.width : undefined,
+      height: asset.kind === 'image' ? seedFile.height : undefined,
       storageKey,
       folderId: asset.folderId,
       status: 'ready',
@@ -454,22 +502,22 @@ export async function uploadAdminMediaAssets(input: {
   const createdAssets: MediaAsset[] = [];
 
   for (const file of input.files) {
-    const { kind, extension } = validateUploadFile(file);
-    const storageKey = createMediaStorageKey(extension);
-    const defaultTagId = kind === 'image' ? DEFAULT_IMAGE_TAG_ID : DEFAULT_DOCUMENT_TAG_ID;
+    const normalizedFile = await normalizeUploadedMediaFile(file);
+    const storageKey = createMediaStorageKey(normalizedFile.extension);
+    const defaultTagId = normalizedFile.kind === 'image' ? DEFAULT_IMAGE_TAG_ID : DEFAULT_DOCUMENT_TAG_ID;
     const tagIds = (await findMediaTagRecordsByIds([defaultTagId])).length > 0 ? [defaultTagId] : [];
-    await writeMediaStorageFile(storageKey, file.data);
+    await writeMediaStorageFile(storageKey, normalizedFile.data);
 
     try {
       const savedRecord = await createMediaAssetRecord({
-        name: file.filename,
+        name: normalizedFile.fileName,
         originalName: file.filename,
-        kind,
-        extension,
-        mimeType: file.mimeType || 'application/octet-stream',
-        size: file.data.length,
-        width: kind === 'image' ? 1600 : undefined,
-        height: kind === 'image' ? 900 : undefined,
+        kind: normalizedFile.kind,
+        extension: normalizedFile.extension,
+        mimeType: normalizedFile.mimeType,
+        size: normalizedFile.data.length,
+        width: normalizedFile.width,
+        height: normalizedFile.height,
         storageKey,
         folderId,
         status: 'ready',
@@ -528,23 +576,23 @@ export async function replaceAdminMediaAsset(id: string, file: UploadedMediaFile
     throw createError({ statusCode: 404, statusMessage: '资源不存在' });
   }
 
-  const { kind, extension } = validateUploadFile(file);
-  if (kind !== existingRecord.kind) {
+  const normalizedFile = await normalizeUploadedMediaFile(file);
+  if (normalizedFile.kind !== existingRecord.kind) {
     throw createError({ statusCode: 400, statusMessage: '替换文件类型与当前资源不一致' });
   }
 
-  const nextStorageKey = createMediaStorageKey(extension);
-  await writeMediaStorageFile(nextStorageKey, file.data);
+  const nextStorageKey = createMediaStorageKey(normalizedFile.extension);
+  await writeMediaStorageFile(nextStorageKey, normalizedFile.data);
 
   try {
     const savedRecord = await updateMediaAssetFileRecord(normalizedId, {
-      name: file.filename,
+      name: normalizedFile.fileName,
       originalName: file.filename,
-      extension,
-      mimeType: file.mimeType || 'application/octet-stream',
-      size: file.data.length,
-      width: kind === 'image' ? (existingRecord.width ?? 1600) : undefined,
-      height: kind === 'image' ? (existingRecord.height ?? 900) : undefined,
+      extension: normalizedFile.extension,
+      mimeType: normalizedFile.mimeType,
+      size: normalizedFile.data.length,
+      width: normalizedFile.width,
+      height: normalizedFile.height,
       storageKey: nextStorageKey,
       status: 'ready',
     });
@@ -715,6 +763,10 @@ export async function readAdminMediaFileContent(id: string) {
     throw createError({ statusCode: 404, statusMessage: '资源不存在' });
   }
 
+  if (record.status === 'failed') {
+    throw createError({ statusCode: 404, statusMessage: '媒体文件不可用' });
+  }
+
   let data: Buffer;
   try {
     data = await readMediaStorageFile(record.storageKey);
@@ -727,10 +779,22 @@ export async function readAdminMediaFileContent(id: string) {
     throw error;
   }
 
-  return {
-    fileName: record.name,
-    mimeType: record.mimeType,
-    kind: record.kind,
-    data,
-  };
+  try {
+    const validatedFile = await validateStoredMediaContent({
+      fileName: record.name,
+      kind: record.kind,
+      data,
+    });
+
+    return {
+      fileName: validatedFile.fileName,
+      mimeType: validatedFile.mimeType,
+      kind: validatedFile.kind,
+      data: validatedFile.data,
+    };
+  }
+  catch {
+    await updateMediaAssetStatusRecord(normalizedId, 'failed');
+    throw createError({ statusCode: 404, statusMessage: '媒体文件不可用' });
+  }
 }

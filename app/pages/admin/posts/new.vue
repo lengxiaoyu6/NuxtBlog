@@ -53,7 +53,7 @@
                 <UploadCloud :size="28" class="text-slate-400 group-hover:text-brand-500 transition-colors" />
               </div>
               <p class="text-sm font-bold text-slate-700 dark:text-slate-200 text-center">点击或拖拽上传封面</p>
-              <p class="text-[11px] font-medium text-slate-400 mt-2 text-center px-4">建议尺寸 1200×630px<br/>支持 JPG, PNG, WEBP, GIF, BMP, AVIF，最大 10MB</p>
+              <p class="text-[11px] font-medium text-slate-400 mt-2 text-center px-4">建议尺寸 1200×630px<br/>仅接受真实 JPG、PNG、WEBP、GIF、BMP、AVIF 图片二进制，最大 10MB</p>
             </template>
           </div>
 
@@ -814,7 +814,7 @@ function validateImageFile(file: File) {
   }
 
   if (!allowedImageExtensions.includes(extension)) {
-    return '当前图片格式暂不支持';
+    return '当前图片格式暂不支持，请选择真实图片二进制文件';
   }
 
   return '';
@@ -828,7 +828,7 @@ function validateAttachmentFile(file: File) {
   }
 
   if (!allowedAttachmentExtensions.includes(extension)) {
-    return '附件仅支持 PDF、DOCX、ZIP';
+    return '附件仅支持真实 PDF、DOCX、ZIP 文档';
   }
 
   return '';
