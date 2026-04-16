@@ -283,6 +283,21 @@ export async function updateMediaAssetFileRecord(
   });
 }
 
+export async function updateMediaAssetStatusRecord(
+  id: string,
+  status: Prisma.MediaAssetUncheckedUpdateInput['status']
+) {
+  return usePrismaClient().mediaAsset.update({
+    where: {
+      id,
+    },
+    data: {
+      status,
+    },
+    include: mediaAssetInclude,
+  });
+}
+
 export async function moveMediaAssetRecords(assetIds: string[], folderId: string) {
   return usePrismaClient().mediaAsset.updateMany({
     where: {

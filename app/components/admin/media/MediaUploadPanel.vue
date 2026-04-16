@@ -12,7 +12,7 @@
         <div class="flex items-center justify-between gap-4">
           <div>
             <h2 class="text-xl font-black text-slate-900 dark:text-white">上传资源</h2>
-            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">支持图片与文档，上传后会进入当前文件夹。</p>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">图片仅接受真实图片二进制，文档仅接受 PDF、DOCX、ZIP 对应格式。</p>
           </div>
           <button
             type="button"
@@ -32,7 +32,7 @@
         >
           <UploadCloud :size="30" class="text-brand-600" />
           <p class="mt-4 text-base font-bold text-slate-900 dark:text-white">拖拽文件到此处，或点击选择文件</p>
-          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">图片与文档大小上限均为 10 MB，失败项可在队列中重新上传。</p>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">图片与文档大小上限均为 10 MB，服务端会重新校验真实格式。</p>
         </button>
 
         <div class="mt-6 space-y-3">

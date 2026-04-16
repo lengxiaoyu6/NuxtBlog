@@ -195,7 +195,7 @@ export function useAdminMediaLibrary() {
     const kind = detectUploadKind(file);
 
     if (!kind) {
-      return '当前文件格式暂不支持';
+      return '当前文件格式暂不支持，请选择真实图片二进制或 PDF、DOCX、ZIP 文档';
     }
 
     if (kind === 'image' && file.size > maxImageSize) {
@@ -207,11 +207,11 @@ export function useAdminMediaLibrary() {
     }
 
     if (kind === 'image' && !allowedImageExtensions.includes(extension)) {
-      return '当前图片格式暂不支持';
+      return '当前图片格式暂不支持，请选择真实图片二进制文件';
     }
 
     if (kind === 'document' && !allowedDocumentExtensions.includes(extension)) {
-      return '当前文档格式暂不支持';
+      return '当前文档格式暂不支持，请选择 PDF、DOCX、ZIP 文档';
     }
 
     return '';

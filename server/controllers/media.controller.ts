@@ -22,6 +22,7 @@ import {
   updateAdminMediaAssetTags,
   uploadAdminMediaAssets,
 } from '../services/media.service';
+import { buildMediaResponseHeaders } from '../services/media-security.service';
 import { requireAdminSession } from '../utils/require-admin-session';
 
 function normalizeMultipartFile(part: NonNullable<Awaited<ReturnType<typeof readMultipartFormData>>>[number]) {
@@ -161,21 +162,33 @@ export const mediaController = {
     await requireAdminSession(event);
     const id = getRouterParam(event, 'id') || '';
     const result = await readAdminMediaFileContent(id);
+    const headers = buildMediaResponseHeaders({
+      fileName: result.fileName,
+      kind: result.kind,
+      mimeType: result.mimeType,
+      isPublic: false,
+    });
 
-    setHeader(event, 'Content-Type', result.mimeType || 'application/octet-stream');
-    const encodedName = encodeURIComponent(result.fileName);
-    const dispositionType = result.kind === 'image' ? 'inline' : 'attachment';
-    setHeader(event, 'Content-Disposition', `${dispositionType}; filename*=UTF-8''${encodedName}`);
+    for (const [name, value] of Object.entries(headers)) {
+      setHeader(event, name, value);
+    }
+
     return result.data;
   },
   async getPublicMediaFile(event: H3Event) {
     const id = getRouterParam(event, 'id') || '';
     const result = await readAdminMediaFileContent(id);
+    const headers = buildMediaResponseHeaders({
+      fileName: result.fileName,
+      kind: result.kind,
+      mimeType: result.mimeType,
+      isPublic: true,
+    });
 
-    setHeader(event, 'Content-Type', result.mimeType || 'application/octet-stream');
-    const encodedName = encodeURIComponent(result.fileName);
-    const dispositionType = result.kind === 'image' ? 'inline' : 'attachment';
-    setHeader(event, 'Content-Disposition', `${dispositionType}; filename*=UTF-8''${encodedName}`);
+    for (const [name, value] of Object.entries(headers)) {
+      setHeader(event, name, value);
+    }
+
     return result.data;
   },
 };

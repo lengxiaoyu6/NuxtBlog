@@ -11,7 +11,8 @@
     "preview": "nuxt preview",
     "postinstall": "prisma generate && nuxt prepare",
     "check:main-purity": "node scripts/check-main-purity.mjs",
-    "release:main": "node scripts/release-main.mjs"
+    "release:main": "node scripts/release-main.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@adonisjs/hash": "^9.1.1",
@@ -25,12 +26,15 @@
     "@tiptap/extension-image": "3.22.0",
     "@tiptap/extension-paragraph": "3.22.0",
     "@tiptap/extension-text-align": "3.22.0",
+    "fflate": "^0.8.2",
+    "file-type": "^22.0.1",
     "highlight.js": "^11.11.1",
     "lowlight": "^3.3.0",
     "lucide-vue-next": "^0.542.0",
     "markdown-it": "^14.1.0",
     "nuxt": "^4.4.2",
     "nuxt-auth-utils": "^0.5.29",
+    "sharp": "^0.34.5",
     "vue": "^3.5.30",
     "vue-router": "^5.0.4"
   },
@@ -42,6 +46,7 @@
     "dotenv": "^17.4.1",
     "prisma": "^7.6.0",
     "tailwindcss": "^4.2.2",
+    "vitest": "^4.1.4",
     "vue-tsc": "^3.1.2"
   }
 }

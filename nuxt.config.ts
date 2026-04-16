@@ -1,7 +1,14 @@
+import { resolveRuntimeH3Path } from './build/utils/resolve-runtime-h3-path';
+
+const runtimeH3Path = resolveRuntimeH3Path();
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
+  },
+  alias: {
+    h3: runtimeH3Path,
   },
   css: ['~/assets/css/main.css'],
   devtools: { enabled: true },
@@ -55,6 +62,11 @@ export default defineNuxtConfig({
     },
   },
   vite: {
+    resolve: {
+      alias: {
+        h3: runtimeH3Path,
+      },
+    },
     optimizeDeps: {
       include: [
         'lucide-vue-next',
