@@ -84,7 +84,7 @@ function cleanupAndCommit(devFiles) {
     if (!hasChanges) {
         console.log('合并完成，develop 与 main 内容一致，无需提交。');
     } else {
-        run('git commit -m "chore: merge develop into main"');
+        run('git commit -m "chore: develop -> main(具体commit内容请查看 develop 分支)"');
         if (devFiles.length > 0) {
             console.log('合并完成，测试文件已从提交中移除。');
         } else {
