@@ -16,80 +16,77 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const DEV_ONLY_PATHS = [
-  'tests',
-  '__tests__',
-  'scripts/dev',
-  'scripts/check-main-purity.mjs',
-  'docs/superpowers',
-  'BRANCHING.md',
-  '.github',
+    'tests',
+    '__tests__',
+    'scripts/dev',
+    'scripts/check-main-purity.mjs',
+    'docs/superpowers',
+    'BRANCHING.md',
+    '.github',
 ];
 
-const DEV_ONLY_PATTERNS = [
-  /\.test\.[^/]+$/u,
-  /\.spec\.[^/]+$/u,
-];
+const DEV_ONLY_PATTERNS = [/\.test\.[^/]+$/u, /\.spec\.[^/]+$/u];
 
 function run(cmd) {
-  execSync(cmd, { cwd: ROOT, stdio: 'inherit' });
+    execSync(cmd, { cwd: ROOT, stdio: 'inherit' });
 }
 
 function currentBranch() {
-  return execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT }).toString().trim();
+    return execSync('git rev-parse --abbrev-ref HEAD', { cwd: ROOT }).toString().trim();
 }
 
 function mergedFiles() {
-  const base = execSync('git merge-base HEAD develop', { cwd: ROOT }).toString().trim();
-  return execSync(`git diff --name-only ${base} develop`, { cwd: ROOT })
-    .toString()
-    .split('\n')
-    .map((f) => f.trim())
-    .filter(Boolean);
+    const base = execSync('git merge-base HEAD develop', { cwd: ROOT }).toString().trim();
+    return execSync(`git diff --name-only ${base} develop`, { cwd: ROOT })
+        .toString()
+        .split('\n')
+        .map((f) => f.trim())
+        .filter(Boolean);
 }
 
 function isDevOnly(filePath) {
-  const normalized = filePath.replace(/\\/gu, '/');
-  if (DEV_ONLY_PATHS.some((p) => normalized === p || normalized.startsWith(p + '/'))) {
-    return true;
-  }
-  return DEV_ONLY_PATTERNS.some((re) => re.test(normalized));
+    const normalized = filePath.replace(/\\/gu, '/');
+    if (DEV_ONLY_PATHS.some((p) => normalized === p || normalized.startsWith(p + '/'))) {
+        return true;
+    }
+    return DEV_ONLY_PATTERNS.some((re) => re.test(normalized));
 }
 
 const branch = currentBranch();
 if (branch !== 'main') {
-  console.error(`请在 main 分支上执行，当前分支：${branch}`);
-  process.exit(1);
+    console.error(`请在 main 分支上执行，当前分支：${branch}`);
+    process.exit(1);
 }
 
 // 预检：列出即将被清理的文件
 const devFiles = mergedFiles().filter(isDevOnly);
 if (devFiles.length > 0) {
-  console.log('以下开发专用文件将在合并后被自动移除：');
-  for (const f of devFiles) console.log(`  - ${f}`);
-  console.log('');
+    console.log('以下开发专用文件将在合并后被自动移除：');
+    for (const f of devFiles) console.log(`  - ${f}`);
+    console.log('');
 }
 
 console.log('合并 develop...');
 run('git merge develop --squash');
 
 if (devFiles.length > 0) {
-  console.log('\n清理开发专用文件...');
-  for (const f of devFiles) {
-    const abs = join(ROOT, f);
-    if (existsSync(abs)) rmSync(abs, { recursive: true, force: true });
-    run(`git rm -rf --cached --ignore-unmatch "${f}"`);
-  }
+    console.log('\n清理开发专用文件...');
+    for (const f of devFiles) {
+        const abs = join(ROOT, f);
+        if (existsSync(abs)) rmSync(abs, { recursive: true, force: true });
+        run(`git rm -rf --cached --ignore-unmatch "${f}"`);
+    }
 }
 
 const hasChanges = execSync('git status --porcelain', { cwd: ROOT }).toString().trim().length > 0;
 
 if (!hasChanges) {
-  console.log('合并完成，develop 与 main 内容一致，无需提交。');
+    console.log('合并完成，develop 与 main 内容一致，无需提交。');
 } else {
-  run('git commit -m "chore: merge develop into main"');
-  if (devFiles.length > 0) {
-    console.log('合并完成，测试文件已从提交中移除。');
-  } else {
-    console.log('合并完成，无开发专用文件需要清理。');
-  }
+    run('git commit -m "chore: develop -> main(具体commit内容请查看 develop 分支)"');
+    if (devFiles.length > 0) {
+        console.log('合并完成，测试文件已从提交中移除。');
+    } else {
+        console.log('合并完成，无开发专用文件需要清理。');
+    }
 }
