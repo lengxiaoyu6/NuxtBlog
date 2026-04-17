@@ -24,5 +24,7 @@ test('Docker 部署文档覆盖容器内数据库与外部数据库两种方式'
   assert.match(content, /\/app\/storage\/media/);
   assert.match(content, /占位值/);
   assert.match(content, /正式部署前必须替换/);
+  assert.match(content, /SECURITY_HASH_SALT/);
+  assert.match(content, /TURNSTILE_SECRET_KEY/);
   assert.match(content, /admin123/);
 });

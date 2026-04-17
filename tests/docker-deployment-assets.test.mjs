@@ -46,12 +46,16 @@ test('Docker 部署资产文件已经落仓并具备关键配置', async () => {
   assert.match(composeWithDb, /build:\s*[\s\S]*args:\s*[\s\S]*APT_MIRROR: ""/);
   assert.match(composeWithDb, /build:\s*[\s\S]*args:\s*[\s\S]*NPM_REGISTRY: ""/);
   assert.match(composeWithDb, /DATABASE_URL: mysql:\/\/nuxtblog:change-this-db-password@db:3306\/nuxt-blog\?allowPublicKeyRetrieval=true/);
+  assert.match(composeWithDb, /SECURITY_HASH_SALT: change-this-security-hash-salt/);
+  assert.match(composeWithDb, /TURNSTILE_SECRET_KEY: ""/);
   assert.match(composeWithDb, /blog-media:\/app\/storage\/media/);
   assert.doesNotMatch(composeWithDb, /^\s+MEDIA_STORAGE_DIR:/m);
 
   assert.match(composeExternalDb, /build:\s*[\s\S]*args:\s*[\s\S]*APT_MIRROR: ""/);
   assert.match(composeExternalDb, /build:\s*[\s\S]*args:\s*[\s\S]*NPM_REGISTRY: ""/);
   assert.match(composeExternalDb, /DATABASE_URL: mysql:\/\/db-user:db-password@db\.example\.com:3306\/nuxt-blog/);
+  assert.match(composeExternalDb, /SECURITY_HASH_SALT: change-this-security-hash-salt/);
+  assert.match(composeExternalDb, /TURNSTILE_SECRET_KEY: ""/);
   assert.match(composeExternalDb, /blog-media:\/app\/storage\/media/);
   assert.doesNotMatch(composeExternalDb, /^\s+MEDIA_STORAGE_DIR:/m);
 
