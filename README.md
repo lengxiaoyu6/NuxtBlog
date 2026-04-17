@@ -130,6 +130,8 @@ pnpm preview
 node .output/server/index.mjs
 ```
 
+服务启动时会校验 `NUXT_SESSION_PASSWORD`。`pnpm dev`、`pnpm preview` 与 `node .output/server/index.mjs` 在该变量缺失或长度少于 32 个字符时会终止启动，并输出对应错误信息。`pnpm build` 仅生成产物，会话密钥校验发生在服务真正启动时。
+
 ## Docker 部署
 
 仓库已经内置 `Dockerfile`、`docker/entrypoint.sh`、`compose.with-db.yml` 与 `compose.external-db.yml`。独立部署说明见 `DOCKER_DEPLOYMENT.md`。
@@ -142,6 +144,8 @@ node .output/server/index.mjs
 如果部署环境位于中国大陆，且服务器访问 Debian 或 npm 官方源较慢，可参考 `DOCKER_DEPLOYMENT.md` 中的中国服务器构建加速参数，在构建阶段设置 `APT_MIRROR` 与 `NPM_REGISTRY`。其中 `NPM_REGISTRY` 会同时作用于 Corepack 获取 pnpm 与依赖安装阶段的 registry。
 
 应用容器启动时会自动执行 `pnpm exec prisma db push`。如果 `MEDIA_STORAGE_DIR` 缺失，容器会默认使用 `/app/storage/media`，并建议把该目录挂载到持久化卷。
+
+Docker 镜像构建阶段同样只生成产物。应用容器真正启动前会校验 `NUXT_SESSION_PASSWORD`，缺失或长度少于 32 个字符时会退出。
 
 ## 部署注意事项
 

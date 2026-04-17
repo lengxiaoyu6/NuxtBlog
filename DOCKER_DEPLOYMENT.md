@@ -31,6 +31,8 @@
 
 ⚠️ 应用容器启动时会自动执行 `pnpm exec prisma db push`。如果目标数据库已有正式数据，启动前应先完成备份评估。
 
+⚠️ 应用容器启动前会校验 `NUXT_SESSION_PASSWORD`。缺失该变量或长度少于 32 个字符时，容器会在数据库检查前退出。
+
 ⚠️ 空数据库首次启动后会自动创建默认管理员，首次登录后应立即修改密码。
 
 ⚠️ 如果启用了登录、评论、留言或友链申请的人机校验，容器环境必须提供 `TURNSTILE_SECRET_KEY`，后台同时需要填写 Turnstile Site Key。
@@ -42,6 +44,8 @@
 ```bash
 docker build -t nuxt-blog:latest .
 ```
+
+镜像构建阶段只生成运行产物，`NUXT_SESSION_PASSWORD` 的强制校验发生在容器启动阶段，因此部署环境仍需在启动前提供合法值。
 
 ## 中国服务器构建加速
 
