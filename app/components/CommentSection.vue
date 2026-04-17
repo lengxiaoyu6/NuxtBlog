@@ -18,6 +18,24 @@
       </button>
     </div>
 
+    <div
+      v-if="captchaEnabled"
+      :class="isFormOpen
+        ? 'fixed inset-x-4 bottom-4 z-[80] mx-auto w-full max-w-xl rounded-[1.75rem] border border-slate-200 bg-white/95 p-4 shadow-2xl backdrop-blur dark:border-slate-700 dark:bg-slate-900/95'
+        : 'rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-800/40'"
+    >
+      <p class="mb-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+        {{ captchaHint }}
+      </p>
+      <TurnstileWidget
+        v-model="turnstileToken"
+        :enabled="captchaEnabled"
+        :site-key="securityConfig.turnstileSiteKey"
+        :reset-nonce="captchaResetNonce"
+        @error="handleCaptchaError"
+      />
+    </div>
+
     <div v-if="isFormOpen" class="fixed inset-0 z-[60] bg-slate-900/40 backdrop-blur-sm" @click="isFormOpen = false" />
 
     <div v-if="isFormOpen" class="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
@@ -74,6 +92,10 @@
             required
           />
 
+          <div v-if="captchaEnabled" class="rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-3 text-xs text-brand-700 dark:border-brand-900/40 dark:bg-brand-950/30 dark:text-brand-200">
+            当前页面已启用人机校验，请先完成上方校验后再提交。
+          </div>
+
           <div class="flex justify-end pt-2">
             <button
               type="submit"
@@ -103,12 +125,14 @@ import { Send, User, MessageCircle, X, Plus } from 'lucide-vue-next';
 import type { CommentItemData } from '~/types/comment';
 import type { PublicPostCommentItem } from '~/types/post-comment';
 import { useAppToast } from '~/composables/useAppToast';
+import { isCaptchaRequired } from '~/utils/security-form';
 
 interface CommentSubmitPayload {
   parentId?: string;
   authorName: string;
   authorEmail: string;
   content: string;
+  turnstileToken?: string;
 }
 
 interface CommentSubmitResponse {
@@ -132,14 +156,46 @@ const email = ref('');
 const isFormOpen = ref(false);
 const submissionMessage = ref('');
 const submissionTone = ref<'success' | 'error'>('success');
+const turnstileToken = ref('');
+const captchaResetNonce = ref(0);
 const isGuestbookPage = computed(() => props.pageId === 'guestbook');
 const visibleComments = computed(() => comments.value);
 const commentsEndpoint = computed(() => `/api/posts/${props.pageId}/comments`);
+const captchaScene = computed(() => (isGuestbookPage.value ? 'guestbook' : 'comment'));
+const captchaHint = computed(() => (isGuestbookPage.value
+  ? '留言或回复前，请先完成人机校验。'
+  : '发表评论或回复前，请先完成人机校验。'));
 const { addToast } = useAppToast();
+const { securityConfig, fetchSecurityPublicConfig } = useSecurityPublicConfig();
+
+await fetchSecurityPublicConfig();
+
+const captchaEnabled = computed(() => isCaptchaRequired(captchaScene.value, securityConfig.value));
 
 function resetSubmissionFeedback() {
   submissionMessage.value = '';
   submissionTone.value = 'success';
+}
+
+function resetCaptcha() {
+  turnstileToken.value = '';
+  captchaResetNonce.value += 1;
+}
+
+function ensureCaptchaReady() {
+  if (!captchaEnabled.value || turnstileToken.value.trim()) {
+    return true;
+  }
+
+  submissionTone.value = 'error';
+  submissionMessage.value = '请先完成人机校验。';
+  addToast('请先完成人机校验。', 'warning');
+  return false;
+}
+
+function handleCaptchaError(message: string) {
+  submissionTone.value = 'error';
+  submissionMessage.value = message;
 }
 
 function resetForm() {
@@ -147,6 +203,13 @@ function resetForm() {
   name.value = '';
   email.value = '';
   isFormOpen.value = false;
+}
+
+function buildSubmitPayload(payload: CommentSubmitPayload): CommentSubmitPayload {
+  return {
+    ...payload,
+    turnstileToken: captchaEnabled.value ? turnstileToken.value || undefined : undefined,
+  };
 }
 
 function toCommentItem(item: PublicPostCommentItem): CommentItemData {
@@ -179,39 +242,48 @@ async function handleSubmit() {
     return;
   }
 
+  if (!ensureCaptchaReady()) {
+    return;
+  }
+
   if (isGuestbookPage.value) {
     try {
       await $fetch('/api/guestbook/entries', {
         method: 'POST',
-        body: {
+        body: buildSubmitPayload({
           authorName: name.value.trim(),
           authorEmail: email.value.trim(),
           content: newComment.value.trim(),
-        } satisfies CommentSubmitPayload,
+        }),
       });
       submissionTone.value = 'success';
       submissionMessage.value = '留言已提交，等待审核后展示。';
       addToast('留言已提交，等待审核后展示。', 'success');
       resetForm();
-      return;
     }
     catch (error) {
       const message = error instanceof Error ? error.message : '留言提交失败';
       submissionTone.value = 'error';
       submissionMessage.value = message;
       addToast(message, 'error');
-      return;
     }
+    finally {
+      if (captchaEnabled.value) {
+        resetCaptcha();
+      }
+    }
+
+    return;
   }
 
   try {
     const response = await $fetch<CommentSubmitResponse>(commentsEndpoint.value, {
       method: 'POST',
-      body: {
+      body: buildSubmitPayload({
         authorName: name.value.trim(),
         authorEmail: email.value.trim(),
         content: newComment.value.trim(),
-      } satisfies CommentSubmitPayload,
+      }),
     });
     submissionTone.value = 'success';
     submissionMessage.value = response.message;
@@ -224,43 +296,57 @@ async function handleSubmit() {
     submissionMessage.value = message;
     addToast(message, 'error');
   }
+  finally {
+    if (captchaEnabled.value) {
+      resetCaptcha();
+    }
+  }
 }
 
 async function handleAddReply(payload: { parentId: string; author: string; authorEmail: string; content: string }) {
+  if (!ensureCaptchaReady()) {
+    return;
+  }
+
   if (isGuestbookPage.value) {
     try {
       await $fetch('/api/guestbook/entries', {
         method: 'POST',
-        body: {
+        body: buildSubmitPayload({
           parentId: payload.parentId,
           authorName: payload.author,
           authorEmail: payload.authorEmail,
           content: payload.content,
-        } satisfies CommentSubmitPayload,
+        }),
       });
       submissionTone.value = 'success';
       submissionMessage.value = '回复已提交，等待审核后展示。';
       addToast('回复已提交，等待审核后展示。', 'success');
-      return;
     }
     catch (error) {
       const message = error instanceof Error ? error.message : '回复提交失败';
       submissionTone.value = 'error';
       submissionMessage.value = message;
       addToast(message, 'error');
-      return;
     }
+    finally {
+      if (captchaEnabled.value) {
+        resetCaptcha();
+      }
+    }
+
+    return;
   }
 
   try {
     const response = await $fetch<CommentSubmitResponse>(commentsEndpoint.value, {
       method: 'POST',
-      body: {
+      body: buildSubmitPayload({
         parentId: payload.parentId,
         authorName: payload.author,
         authorEmail: payload.authorEmail,
         content: payload.content,
-      } satisfies CommentSubmitPayload,
+      }),
     });
     submissionTone.value = 'success';
     submissionMessage.value = response.message;
@@ -272,6 +358,11 @@ async function handleAddReply(payload: { parentId: string; author: string; autho
     submissionMessage.value = message;
     addToast(message, 'error');
   }
+  finally {
+    if (captchaEnabled.value) {
+      resetCaptcha();
+    }
+  }
 }
 
 onMounted(() => {
@@ -281,6 +372,7 @@ onMounted(() => {
 
 watch(() => props.pageId, () => {
   resetSubmissionFeedback();
+  resetCaptcha();
   void readComments();
 });
 </script>

@@ -14,6 +14,9 @@ import {
   readPublicPosts,
   updateAdminPost as updateAdminPostService,
 } from '../services/post.service';
+import { useSecurityRequestService } from '../services/security-request.service';
+import { toSecurityRateLimitPolicy } from '../services/security-settings.service';
+import { readSiteSecuritySettings } from '../services/site-settings.service';
 import { requireAdminSession } from '../utils/require-admin-session';
 
 export const postController = {
@@ -69,6 +72,15 @@ export const postController = {
   },
   async increasePublicPostLikes(event: H3Event) {
     const identifier = getRouterParam(event, 'identifier') || '';
+    const securitySettings = await readSiteSecuritySettings();
+    const securityRequestService = useSecurityRequestService();
+
+    await securityRequestService.consumeRateLimit(event, {
+      action: 'post_like',
+      policy: toSecurityRateLimitPolicy(securitySettings.likes.rateLimit),
+      blockedMessage: '点赞操作过于频繁，请稍后再试',
+    });
+
     return await increasePublicPostLikesService(identifier);
   },
 };

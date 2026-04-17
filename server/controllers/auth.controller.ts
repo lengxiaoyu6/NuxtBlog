@@ -1,10 +1,13 @@
 import { createError, readBody, type H3Event } from 'h3';
 import type { AdminSessionUser } from '../../shared/types/auth';
 import { changeAdminPassword, verifyAdminCredentials } from '../services/auth.service';
+import { readSiteSecuritySettings } from '../services/site-settings.service';
+import { useSecurityRequestService } from '../services/security-request.service';
+import { toLoginFailureSettings, toSecurityRateLimitPolicy } from '../services/security-settings.service';
 
 export const authController = {
   async login(event: H3Event) {
-    const body = await readBody<{ username?: string; password?: string }>(event);
+    const body = await readBody<{ username?: string; password?: string; turnstileToken?: string }>(event);
     const username = body.username?.trim();
     const password = body.password;
 
@@ -15,15 +18,33 @@ export const authController = {
       });
     }
 
+    const securitySettings = await readSiteSecuritySettings();
+    const securityRequestService = useSecurityRequestService();
+    const rateLimitPolicy = toSecurityRateLimitPolicy(securitySettings.login.rateLimit);
+    const loginFailureSettings = toLoginFailureSettings(securitySettings.login);
+
+    await securityRequestService.consumeRateLimit(event, {
+      action: 'auth_login',
+      policy: rateLimitPolicy,
+      blockedMessage: '登录请求过于频繁，请稍后再试',
+    });
+    await securityRequestService.assertLoginAllowed(event, loginFailureSettings);
+    await securityRequestService.verifyTurnstile(event, {
+      enabled: securitySettings.login.captchaEnabled,
+      token: body.turnstileToken,
+    });
+
     const sessionUser = await verifyAdminCredentials(username, password);
 
     if (!sessionUser) {
+      await securityRequestService.registerLoginFailure(event, loginFailureSettings);
       throw createError({
         statusCode: 401,
         statusMessage: '用户名或密码错误',
       });
     }
 
+    await securityRequestService.clearLoginFailures(event);
     await setUserSession(event, {
       user: sessionUser satisfies AdminSessionUser,
       loggedInAt: Date.now(),

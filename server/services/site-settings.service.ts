@@ -1,6 +1,11 @@
 import { cloneSiteSettings, DEFAULT_SITE_SETTINGS } from '../../app/constants/site-settings';
 import type { AdminSettingsForm } from '../../app/types/admin-settings';
 import { readSiteSettingsRecord, upsertSiteSettingsRecord } from '../repositories/site-settings.repository';
+import {
+  buildPublicSecurityConfig,
+  normalizeSiteSecuritySettings,
+  validateSecuritySettings,
+} from './security-settings.service';
 import { ensureSeedPageSettings } from './page-settings.service';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -26,6 +31,7 @@ function normalizeSiteSettings(input: AdminSettingsForm) {
       ...item,
       order: index + 1,
     })),
+    security: normalizeSiteSecuritySettings(input.security),
   } satisfies AdminSettingsForm;
 }
 
@@ -80,6 +86,7 @@ function validateSiteSettings(input: AdminSettingsForm) {
   }
 
   ensureTextMaxLength(input.footer.note, 140, '补充说明需控制在 140 个字符以内');
+  validateSecuritySettings(input.security);
 }
 
 function toSiteSettingsForm(record: NonNullable<Awaited<ReturnType<typeof readSiteSettingsRecord>>>) {
@@ -121,6 +128,10 @@ function toSiteSettingsForm(record: NonNullable<Awaited<ReturnType<typeof readSi
       icpLink: record.footerIcpLink ?? '',
       note: record.footerNote ?? '',
     },
+    security: normalizeSiteSecuritySettings({
+      turnstileSiteKey: record.turnstileSiteKey ?? '',
+      ...(record.securitySettingsJson && typeof record.securitySettingsJson === 'object' ? record.securitySettingsJson : {}),
+    }),
   } satisfies AdminSettingsForm;
 }
 
@@ -145,6 +156,11 @@ export async function readSiteSettings() {
   return toSiteSettingsForm(record);
 }
 
+export async function readSiteSecuritySettings() {
+  const settings = await readSiteSettings();
+  return settings.security;
+}
+
 export async function readPublicSiteSettings() {
   const settings = await readSiteSettings();
 
@@ -153,6 +169,14 @@ export async function readPublicSiteSettings() {
     socialLinks: settings.socialLinks.filter((item) => item.enabled && item.url.trim()),
     navItems: settings.navItems.filter((item) => item.enabled && item.href.trim()),
   } satisfies AdminSettingsForm;
+}
+
+export async function readPublicSecurityConfig() {
+  const settings = await readSiteSettings();
+  return buildPublicSecurityConfig({
+    turnstileSiteKey: settings.security.turnstileSiteKey,
+    security: settings.security,
+  });
 }
 
 export async function saveSiteSettings(input: AdminSettingsForm) {

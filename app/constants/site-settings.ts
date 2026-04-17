@@ -1,3 +1,4 @@
+import { cloneSiteSecuritySettings, DEFAULT_SITE_SECURITY_SETTINGS } from '~~/shared/constants/security';
 import type { AdminSettingsForm } from '~/types/admin-settings';
 
 export const DEFAULT_SITE_SETTINGS: AdminSettingsForm = {
@@ -106,6 +107,7 @@ export const DEFAULT_SITE_SETTINGS: AdminSettingsForm = {
     icpLink: 'https://beian.miit.gov.cn/',
     note: '',
   },
+  security: cloneSiteSecuritySettings(DEFAULT_SITE_SECURITY_SETTINGS),
 };
 
 export function cloneSiteSettings(settings: AdminSettingsForm = DEFAULT_SITE_SETTINGS): AdminSettingsForm {
@@ -115,5 +117,6 @@ export function cloneSiteSettings(settings: AdminSettingsForm = DEFAULT_SITE_SET
     socialLinks: settings.socialLinks.map((item) => ({ ...item })),
     navItems: settings.navItems.map((item) => ({ ...item })),
     footer: { ...settings.footer },
+    security: cloneSiteSecuritySettings(settings.security),
   };
 }

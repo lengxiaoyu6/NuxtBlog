@@ -74,6 +74,14 @@ export async function upsertSiteSettingsRecord(input: AdminSettingsForm) {
       footerIcpText: input.footer.icpText || null,
       footerIcpLink: input.footer.icpLink || null,
       footerNote: input.footer.note || null,
+      turnstileSiteKey: input.security.turnstileSiteKey || null,
+      securitySettingsJson: {
+        login: input.security.login,
+        comments: input.security.comments,
+        guestbook: input.security.guestbook,
+        linkApplications: input.security.linkApplications,
+        likes: input.security.likes,
+      },
       socialLinks: {
         create: toSocialLinkCreateInput(input.socialLinks),
       },
@@ -97,6 +105,14 @@ export async function upsertSiteSettingsRecord(input: AdminSettingsForm) {
       footerIcpText: input.footer.icpText || null,
       footerIcpLink: input.footer.icpLink || null,
       footerNote: input.footer.note || null,
+      turnstileSiteKey: input.security.turnstileSiteKey || null,
+      securitySettingsJson: {
+        login: input.security.login,
+        comments: input.security.comments,
+        guestbook: input.security.guestbook,
+        linkApplications: input.security.linkApplications,
+        likes: input.security.likes,
+      },
       socialLinks: {
         deleteMany: {},
         create: toSocialLinkCreateInput(input.socialLinks),

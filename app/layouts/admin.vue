@@ -104,7 +104,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { DEFAULT_SITE_SETTINGS } from '~/constants/site-settings';
-import type { AdminSessionUser } from '~/../shared/types/auth';
+import type { AdminSessionUser } from '~~/shared/types/auth';
 import { 
   LayoutDashboard, 
   FileText, 

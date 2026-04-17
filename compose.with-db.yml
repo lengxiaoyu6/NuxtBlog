@@ -33,6 +33,8 @@ services:
     environment:
       NUXT_SESSION_PASSWORD: change-this-session-secret
       DATABASE_URL: mysql://nuxtblog:change-this-db-password@db:3306/nuxt-blog?allowPublicKeyRetrieval=true
+      SECURITY_HASH_SALT: change-this-security-hash-salt
+      TURNSTILE_SECRET_KEY: ""
     ports:
       - "3000:3000"
     volumes:

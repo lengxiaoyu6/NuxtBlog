@@ -1,3 +1,5 @@
+import type { SiteSecuritySettings } from '~~/shared/types/security';
+
 export type SiteSocialIcon = 'github' | 'twitter' | 'linkedin' | 'mail' | 'website';
 
 export interface SiteProfileSettings {
@@ -48,6 +50,7 @@ export interface AdminSettingsForm {
   socialLinks: SiteSocialLink[];
   navItems: SiteNavItem[];
   footer: SiteFooterSettings;
+  security: SiteSecuritySettings;
 }
 
 export type AdminSettingsSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';

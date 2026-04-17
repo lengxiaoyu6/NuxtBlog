@@ -1,4 +1,4 @@
-import type { AdminSessionUser } from '~/../shared/types/auth';
+import type { AdminSessionUser } from '~~/shared/types/auth';
 
 export default defineNuxtRouteMiddleware(async (to) => {
   if (!to.path.startsWith('/admin')) {
