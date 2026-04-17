@@ -11,6 +11,23 @@ require_env() {
   fi
 }
 
+require_session_password() {
+  session_password="$(printenv NUXT_SESSION_PASSWORD 2>/dev/null || true)"
+  trimmed_session_password="$(printf '%s' "$session_password" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+  if [ -z "$trimmed_session_password" ]; then
+    echo "缺少 NUXT_SESSION_PASSWORD 环境变量" >&2
+    exit 1
+  fi
+
+  if [ "${#trimmed_session_password}" -lt 32 ]; then
+    echo "NUXT_SESSION_PASSWORD 至少需要 32 个字符" >&2
+    exit 1
+  fi
+
+  export NUXT_SESSION_PASSWORD="$trimmed_session_password"
+}
+
 wait_for_database() {
   attempts=0
   max_attempts="${DATABASE_WAIT_MAX_ATTEMPTS:-30}"
@@ -44,7 +61,7 @@ EOF_NODE
   exit 1
 }
 
-require_env NUXT_SESSION_PASSWORD
+require_session_password
 require_env DATABASE_URL
 
 export MEDIA_STORAGE_DIR="${MEDIA_STORAGE_DIR:-/app/storage/media}"

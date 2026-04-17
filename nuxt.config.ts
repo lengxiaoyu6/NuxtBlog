@@ -1,4 +1,5 @@
 import { resolveRuntimeH3Path } from './build/utils/resolve-runtime-h3-path';
+import { resolveSessionPasswordRuntimeValue } from './shared/utils/session-password';
 
 const runtimeH3Path = resolveRuntimeH3Path();
 
@@ -15,7 +16,7 @@ export default defineNuxtConfig({
   modules: ['@nuxt/ui', 'nuxt-auth-utils'],
   runtimeConfig: {
     session: {
-      password: process.env.NUXT_SESSION_PASSWORD || 'dev-session-password-change-me-32',
+      password: resolveSessionPasswordRuntimeValue(),
     },
     databaseUrl: process.env.DATABASE_URL || 'mysql://root:password@127.0.0.1:3306/nuxt-blog',
     mediaStorageDir: process.env.MEDIA_STORAGE_DIR || 'storage/media',
