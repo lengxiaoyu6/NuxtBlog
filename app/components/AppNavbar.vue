@@ -174,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Search } from 'lucide-vue-next';
 import { useSiteSettings } from '~/composables/useSiteSettings';
 import { usePageSettings } from '~/composables/usePageSettings';
@@ -233,43 +233,8 @@ function handleScroll() {
   }
 }
 
-async function toggleTheme(event: MouseEvent) {
-  const isAppearanceTransition =
-    // @ts-expect-error experimental API
-    document.startViewTransition &&
-    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  if (!isAppearanceTransition) {
-    isDark.value = !isDark.value;
-    return;
-  }
-
-  const x = event.clientX;
-  const y = event.clientY;
-  const endRadius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-
-  // @ts-expect-error experimental API
-  const transition = document.startViewTransition(async () => {
-    isDark.value = !isDark.value;
-    await nextTick();
-  });
-
-  transition.ready.then(() => {
-    const clipPath = [
-      `circle(0px at ${x}px ${y}px)`,
-      `circle(${endRadius}px at ${x}px ${y}px)`,
-    ];
-    document.documentElement.animate(
-      {
-        clipPath: isDark.value ? [...clipPath].reverse() : clipPath,
-      },
-      {
-        duration: 500,
-        easing: 'cubic-bezier(0.65, 0, 0.35, 1)',
-        pseudoElement: isDark.value ? '::view-transition-old(root)' : '::view-transition-new(root)',
-      }
-    );
-  });
+function toggleTheme() {
+  isDark.value = !isDark.value;
 }
 
 function isActive(link: { path: string; isExternal: boolean }) {
