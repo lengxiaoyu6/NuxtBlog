@@ -111,7 +111,9 @@ describe('public submit security integration', () => {
     vi.stubGlobal('readBody', vi.fn());
     vi.stubGlobal('getRouterParam', vi.fn().mockReturnValue('article-identifier'));
     mocks.readSiteSecuritySettings.mockResolvedValue(createSiteSecuritySettings());
-    mocks.securityRequestService.consumeRateLimit.mockResolvedValue({});
+    mocks.securityRequestService.consumeRateLimit.mockResolvedValue({
+      ip: '113.118.113.77',
+    });
     mocks.securityRequestService.verifyTurnstile.mockResolvedValue({ ok: true });
     mocks.createPostComment.mockResolvedValue({ ok: true, message: '评论已提交' });
     mocks.createGuestbookEntry.mockResolvedValue({ ok: true, message: '留言已提交' });
@@ -151,7 +153,9 @@ describe('public submit security integration', () => {
     });
     expect(mocks.createPostComment).toHaveBeenCalledWith('article-identifier', expect.objectContaining({
       content: '测试评论',
-    }));
+    }), {
+      clientIp: '113.118.113.77',
+    });
   });
 
   it('checks rate limit and captcha before creating a guestbook entry', async () => {
@@ -182,7 +186,9 @@ describe('public submit security integration', () => {
     });
     expect(mocks.createGuestbookEntry).toHaveBeenCalledWith(expect.objectContaining({
       content: '测试留言',
-    }));
+    }), {
+      clientIp: '113.118.113.77',
+    });
   });
 
   it('checks rate limit and captcha before creating a friend-link application', async () => {
