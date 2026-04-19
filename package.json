@@ -29,6 +29,7 @@
     "fflate": "^0.8.2",
     "file-type": "^22.0.1",
     "highlight.js": "^11.11.1",
+    "ip2region.js": "^3.1.8",
     "lowlight": "^3.3.0",
     "lucide-vue-next": "^0.542.0",
     "markdown-it": "^14.1.0",

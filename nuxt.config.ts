@@ -22,6 +22,9 @@ export default defineNuxtConfig({
     mediaStorageDir: process.env.MEDIA_STORAGE_DIR || 'storage/media',
     securityHashSalt: process.env.SECURITY_HASH_SALT || '',
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
+    ipRegionProvider: process.env.IP_REGION_PROVIDER || 'ip2region',
+    ipRegionDbV4Path: process.env.IP_REGION_DB_V4_PATH || 'server/resources/ip2region/ip2region_v4.xdb',
+    ipRegionDbV6Path: process.env.IP_REGION_DB_V6_PATH || 'server/resources/ip2region/ip2region_v6.xdb',
     public: {},
   },
   routeRules: {

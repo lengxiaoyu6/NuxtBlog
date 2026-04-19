@@ -49,6 +49,7 @@ COPY --from=build /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=build /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/docker ./docker
+COPY --from=build /app/server/resources/ip2region ./server/resources/ip2region
 COPY --from=build /app/.env.example ./.env.example
 
 RUN chmod +x ./docker/entrypoint.sh

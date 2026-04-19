@@ -7,6 +7,7 @@ export const POST_COMMENT_CONTENT_MAX_LENGTH = 1000;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POST_COMMENT_SUBMIT_SUCCESS_MESSAGE = '评论已提交，等待审核后展示';
+const UNKNOWN_AUTHOR_REGION = '地区未知';
 
 function normalizeText(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -125,6 +126,7 @@ export function createPostCommentService(dependencies) {
     readCommentsByPostId,
     findCommentById,
     createCommentRecord,
+    resolveAuthorRegionByIp = async () => UNKNOWN_AUTHOR_REGION,
     createError,
     now = () => new Date(),
   } = dependencies;
@@ -160,7 +162,7 @@ export function createPostCommentService(dependencies) {
       const records = await readCommentsByPostId(normalizedPostId);
       return buildApprovedCommentTree(records);
     },
-    async createPostComment(postId, input) {
+    async createPostComment(postId, input, options = {}) {
       const normalizedPostId = await assertPublishedPostExists(postId);
       const normalizedInput = normalizePostCommentSubmitInput(input);
 
@@ -170,13 +172,21 @@ export function createPostCommentService(dependencies) {
         await assertParentCommentAvailable(normalizedPostId, normalizedInput.parentId);
       }
 
+      let authorRegion = UNKNOWN_AUTHOR_REGION;
+      try {
+        authorRegion = await resolveAuthorRegionByIp(options.clientIp);
+      }
+      catch {
+        authorRegion = UNKNOWN_AUTHOR_REGION;
+      }
+
       await createCommentRecord({
         postId: normalizedPostId,
         parentId: normalizedInput.parentId || null,
         authorName: normalizedInput.authorName,
         authorEmail: normalizedInput.authorEmail,
         authorAvatarUrl: createCommentAvatar(normalizedInput.authorName),
-        authorRegion: '待识别地区',
+        authorRegion,
         content: normalizedInput.content,
         submittedAt: now(),
       });
