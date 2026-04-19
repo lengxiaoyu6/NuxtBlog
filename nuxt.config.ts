@@ -58,6 +58,7 @@ export default defineNuxtConfig({
     fallback: 'light',
     preference: 'system',
     storageKey: 'theme',
+    disableTransition: true,
   },
   auth: {
     hash: {
