@@ -20,7 +20,7 @@ export const guestbookController = {
     const securitySettings = await readSiteSecuritySettings();
     const securityRequestService = useSecurityRequestService();
 
-    await securityRequestService.consumeRateLimit(event, {
+    const requestContext = await securityRequestService.consumeRateLimit(event, {
       action: 'guestbook_submit',
       policy: toSecurityRateLimitPolicy(securitySettings.guestbook.rateLimit),
       blockedMessage: '留言提交过于频繁，请稍后再试',
@@ -30,7 +30,9 @@ export const guestbookController = {
       token: body?.turnstileToken,
     });
 
-    return await createGuestbookEntry(body);
+    return await createGuestbookEntry(body, {
+      clientIp: requestContext.ip,
+    });
   },
   async getAdminGuestbookComments(event: H3Event) {
     await requireAdminSession(event);

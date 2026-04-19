@@ -26,7 +26,7 @@ export const postCommentController = {
     const securitySettings = await readSiteSecuritySettings();
     const securityRequestService = useSecurityRequestService();
 
-    await securityRequestService.consumeRateLimit(event, {
+    const requestContext = await securityRequestService.consumeRateLimit(event, {
       action: 'post_comment_submit',
       policy: toSecurityRateLimitPolicy(securitySettings.comments.rateLimit),
       blockedMessage: '评论提交过于频繁，请稍后再试',
@@ -36,7 +36,9 @@ export const postCommentController = {
       token: body?.turnstileToken,
     });
 
-    return await createPostComment(identifier, body);
+    return await createPostComment(identifier, body, {
+      clientIp: requestContext.ip,
+    });
   },
   async getAdminPostComments(event: H3Event) {
     await requireAdminSession(event);

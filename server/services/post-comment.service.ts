@@ -1,3 +1,4 @@
+import { createError } from 'h3';
 import type { AdminComment } from '../../app/types/admin-comment';
 import type {
   AdminPostCommentListQuery,
@@ -13,6 +14,7 @@ import {
   readPostCommentRecordsByPostId,
   updatePostCommentStatusRecord,
 } from '../repositories/post-comment.repository';
+import { resolveAuthorRegionByIp } from './ip-region.service';
 import { formatDateTimeInShanghai } from './post.logic.mjs';
 import { createPostCommentService } from './post-comment.logic.mjs';
 
@@ -37,6 +39,7 @@ const postCommentService = createPostCommentService({
   readCommentsByPostId: readPostCommentRecordsByPostId,
   findCommentById: findPostCommentRecordById,
   createCommentRecord: createPostCommentRecord,
+  resolveAuthorRegionByIp,
   createError,
   now: () => new Date(),
 });
@@ -45,8 +48,12 @@ export async function readPublicPostComments(postId: string) {
   return await postCommentService.readPublicPostComments(postId);
 }
 
-export async function createPostComment(postId: string, input: PostCommentSubmitInput | null | undefined) {
-  return await postCommentService.createPostComment(postId, input);
+export async function createPostComment(
+  postId: string,
+  input: PostCommentSubmitInput | null | undefined,
+  options?: { clientIp?: string | null },
+) {
+  return await postCommentService.createPostComment(postId, input, options);
 }
 
 type AdminPostCommentRecord = Awaited<ReturnType<typeof readAdminPostCommentRecords>>[number];

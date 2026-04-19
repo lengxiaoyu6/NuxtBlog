@@ -1,3 +1,4 @@
+import { createError } from 'h3';
 import type { AdminComment, AdminCommentStatus } from '../../app/types/admin-comment';
 import type { CommentItemData } from '../../app/types/comment';
 import type { GuestbookEntrySubmitInput, GuestbookStatusUpdateInput } from '../../shared/types/guestbook';
@@ -7,11 +8,24 @@ import {
   readGuestbookEntryRecords,
   updateGuestbookEntryStatusRecord,
 } from '../repositories/guestbook.repository';
+import { UNKNOWN_IP_REGION, resolveAuthorRegionByIp } from './ip-region.service';
 import { readGuestbookPageSettings } from './page-settings.service';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type GuestbookRecord = Awaited<ReturnType<typeof readGuestbookEntryRecords>>[number];
+type GuestbookPageSettings = Awaited<ReturnType<typeof readGuestbookPageSettings>>;
+
+interface GuestbookServiceDependencies {
+  readGuestbookPageSettings?: () => Promise<GuestbookPageSettings>;
+  readGuestbookEntryRecords?: typeof readGuestbookEntryRecords;
+  findGuestbookEntryById?: typeof findGuestbookEntryRecordById;
+  createGuestbookEntryRecord?: typeof createGuestbookEntryRecord;
+  updateGuestbookEntryStatusRecord?: typeof updateGuestbookEntryStatusRecord;
+  resolveAuthorRegionByIp?: (ip: string | null | undefined) => Promise<string>;
+  createError?: typeof createError;
+  now?: () => Date;
+}
 
 function formatSubmittedAt(value: Date) {
   return value.toISOString().slice(0, 16).replace('T', ' ');
@@ -50,140 +64,178 @@ function createAdminComment(record: GuestbookRecord, parentRecord?: GuestbookRec
   };
 }
 
-function validateGuestbookEntryInput(input: GuestbookEntrySubmitInput) {
+function validateGuestbookEntryInput(input: GuestbookEntrySubmitInput, createErrorImpl: typeof createError) {
   const authorName = input.authorName?.trim() || '';
   const authorEmail = input.authorEmail?.trim() || '';
   const content = input.content?.trim() || '';
 
   if (authorName.length < 2 || authorName.length > 24) {
-    throw createError({
+    throw createErrorImpl({
       statusCode: 400,
       statusMessage: '昵称长度需在 2 到 24 个字符之间',
     });
   }
 
   if (!EMAIL_PATTERN.test(authorEmail)) {
-    throw createError({
+    throw createErrorImpl({
       statusCode: 400,
       statusMessage: '请输入有效的邮箱地址',
     });
   }
 
   if (!content || content.length > 1000) {
-    throw createError({
+    throw createErrorImpl({
       statusCode: 400,
       statusMessage: '留言内容长度需在 1 到 1000 个字符之间',
     });
   }
 }
 
-function validateGuestbookStatus(status: GuestbookStatusUpdateInput['status']) {
+function validateGuestbookStatus(status: GuestbookStatusUpdateInput['status'], createErrorImpl: typeof createError) {
   if (status === 'approved' || status === 'rejected' || status === 'spam') {
     return status;
   }
 
-  throw createError({
+  throw createErrorImpl({
     statusCode: 400,
     statusMessage: '留言状态无效',
   });
 }
 
-export async function readPublicGuestbookEntries() {
-  const records = await readGuestbookEntryRecords();
-  const approvedRecords = records.filter((item) => item.status === 'approved');
-  const nodeMap = new Map<string, CommentItemData>();
-  const roots: CommentItemData[] = [];
-
-  for (const record of approvedRecords) {
-    nodeMap.set(record.id, createCommentNode(record));
-  }
-
-  for (const record of approvedRecords) {
-    const node = nodeMap.get(record.id);
-    if (!node) {
-      continue;
-    }
-
-    if (record.parentId) {
-      const parentNode = nodeMap.get(record.parentId);
-      if (!parentNode) {
-        continue;
-      }
-
-      parentNode.replies = [...(parentNode.replies ?? []), node];
-      continue;
-    }
-
-    roots.push(node);
-  }
-
-  return roots;
-}
-
-export async function createGuestbookEntry(input: GuestbookEntrySubmitInput) {
-  validateGuestbookEntryInput(input);
-
-  const guestbookPageSettings = await readGuestbookPageSettings();
-  if (!guestbookPageSettings.enabled) {
-    throw createError({
-      statusCode: 409,
-      statusMessage: '留言板当前未开放提交',
-    });
-  }
-
-  const parentId = input.parentId?.trim() || '';
-  if (parentId) {
-    const parentRecord = await findGuestbookEntryRecordById(parentId);
-    if (!parentRecord) {
-      throw createError({
-        statusCode: 404,
-        statusMessage: '回复目标不存在',
-      });
-    }
-  }
-
-  await createGuestbookEntryRecord({
-    parentId: parentId || null,
-    authorName: input.authorName.trim(),
-    authorEmail: input.authorEmail.trim(),
-    authorAvatarUrl: `https://picsum.photos/seed/${encodeURIComponent(input.authorName.trim())}/100/100`,
-    authorRegion: '来自互联网',
-    content: input.content.trim(),
-    submittedAt: new Date(),
-  });
+export function createGuestbookService(dependencies: GuestbookServiceDependencies = {}) {
+  const {
+    readGuestbookPageSettings: readGuestbookPageSettingsImpl = readGuestbookPageSettings,
+    readGuestbookEntryRecords: readGuestbookEntryRecordsImpl = readGuestbookEntryRecords,
+    findGuestbookEntryById: findGuestbookEntryByIdImpl = findGuestbookEntryRecordById,
+    createGuestbookEntryRecord: createGuestbookEntryRecordImpl = createGuestbookEntryRecord,
+    updateGuestbookEntryStatusRecord: updateGuestbookEntryStatusRecordImpl = updateGuestbookEntryStatusRecord,
+    resolveAuthorRegionByIp: resolveAuthorRegionByIpImpl = resolveAuthorRegionByIp,
+    createError: createErrorImpl = createError,
+    now = () => new Date(),
+  } = dependencies;
 
   return {
-    ok: true,
-    message: '留言已提交，等待审核后展示',
+    async readPublicGuestbookEntries() {
+      const records = await readGuestbookEntryRecordsImpl();
+      const approvedRecords = records.filter((item) => item.status === 'approved');
+      const nodeMap = new Map<string, CommentItemData>();
+      const roots: CommentItemData[] = [];
+
+      for (const record of approvedRecords) {
+        nodeMap.set(record.id, createCommentNode(record));
+      }
+
+      for (const record of approvedRecords) {
+        const node = nodeMap.get(record.id);
+        if (!node) {
+          continue;
+        }
+
+        if (record.parentId) {
+          const parentNode = nodeMap.get(record.parentId);
+          if (!parentNode) {
+            continue;
+          }
+
+          parentNode.replies = [...(parentNode.replies ?? []), node];
+          continue;
+        }
+
+        roots.push(node);
+      }
+
+      return roots;
+    },
+    async createGuestbookEntry(input: GuestbookEntrySubmitInput, options?: { clientIp?: string | null }) {
+      validateGuestbookEntryInput(input, createErrorImpl);
+
+      const guestbookPageSettings = await readGuestbookPageSettingsImpl();
+      if (!guestbookPageSettings.enabled) {
+        throw createErrorImpl({
+          statusCode: 409,
+          statusMessage: '留言板当前未开放提交',
+        });
+      }
+
+      const parentId = input.parentId?.trim() || '';
+      if (parentId) {
+        const parentRecord = await findGuestbookEntryByIdImpl(parentId);
+        if (!parentRecord) {
+          throw createErrorImpl({
+            statusCode: 404,
+            statusMessage: '回复目标不存在',
+          });
+        }
+      }
+
+      let authorRegion = UNKNOWN_IP_REGION;
+      try {
+        authorRegion = await resolveAuthorRegionByIpImpl(options?.clientIp);
+      }
+      catch {
+        authorRegion = UNKNOWN_IP_REGION;
+      }
+
+      await createGuestbookEntryRecordImpl({
+        parentId: parentId || null,
+        authorName: input.authorName.trim(),
+        authorEmail: input.authorEmail.trim(),
+        authorAvatarUrl: `https://picsum.photos/seed/${encodeURIComponent(input.authorName.trim())}/100/100`,
+        authorRegion,
+        content: input.content.trim(),
+        submittedAt: now(),
+      });
+
+      return {
+        ok: true,
+        message: '留言已提交，等待审核后展示',
+      };
+    },
+    async readAdminGuestbookComments() {
+      const records = await readGuestbookEntryRecordsImpl();
+      const recordMap = new Map(records.map((item) => [item.id, item]));
+
+      return records.map((record) => createAdminComment(record, record.parentId ? recordMap.get(record.parentId) : undefined));
+    },
+    async updateGuestbookEntryStatus(id: string, status: GuestbookStatusUpdateInput['status']) {
+      if (!id.trim()) {
+        throw createErrorImpl({
+          statusCode: 400,
+          statusMessage: '留言标识不能为空',
+        });
+      }
+
+      const existingRecord = await findGuestbookEntryByIdImpl(id);
+      if (!existingRecord) {
+        throw createErrorImpl({
+          statusCode: 404,
+          statusMessage: '留言不存在',
+        });
+      }
+
+      const nextStatus = validateGuestbookStatus(status, createErrorImpl);
+      const updatedRecord = await updateGuestbookEntryStatusRecordImpl(id, nextStatus);
+      const parentRecord = updatedRecord.parentId ? await findGuestbookEntryByIdImpl(updatedRecord.parentId) : null;
+
+      return createAdminComment(updatedRecord, parentRecord ?? undefined);
+    },
   };
 }
 
-export async function readAdminGuestbookComments() {
-  const records = await readGuestbookEntryRecords();
-  const recordMap = new Map(records.map((item) => [item.id, item]));
+const guestbookService = createGuestbookService();
 
-  return records.map((record) => createAdminComment(record, record.parentId ? recordMap.get(record.parentId) : undefined));
+export async function readPublicGuestbookEntries() {
+  return await guestbookService.readPublicGuestbookEntries();
+}
+
+export async function createGuestbookEntry(input: GuestbookEntrySubmitInput, options?: { clientIp?: string | null }) {
+  return await guestbookService.createGuestbookEntry(input, options);
+}
+
+export async function readAdminGuestbookComments() {
+  return await guestbookService.readAdminGuestbookComments();
 }
 
 export async function updateGuestbookEntryStatus(id: string, status: GuestbookStatusUpdateInput['status']) {
-  if (!id.trim()) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: '留言标识不能为空',
-    });
-  }
-
-  const existingRecord = await findGuestbookEntryRecordById(id);
-  if (!existingRecord) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: '留言不存在',
-    });
-  }
-
-  const nextStatus = validateGuestbookStatus(status);
-  const updatedRecord = await updateGuestbookEntryStatusRecord(id, nextStatus);
-  const parentRecord = updatedRecord.parentId ? await findGuestbookEntryRecordById(updatedRecord.parentId) : null;
-
-  return createAdminComment(updatedRecord, parentRecord ?? undefined);
+  return await guestbookService.updateGuestbookEntryStatus(id, status);
 }
