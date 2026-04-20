@@ -1,5 +1,5 @@
 <template>
-  <UModal v-model:open="isOpen">
+  <UModal v-model:open="isOpen" :ui="modalUi">
     <template #content>
       <div class="overflow-hidden bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800">
         <div class="flex items-center gap-3 border-b border-slate-200 dark:border-slate-800 px-4 py-4 sm:px-6">
@@ -83,6 +83,9 @@ const inputRef = ref<HTMLInputElement | null>(null);
 const { isOpen, query, closeSearch } = useSearchDialog();
 const searchResults = ref<PostSearchResultItem[]>([]);
 const isSearching = ref(false);
+const modalUi = {
+  content: 'overflow-visible bg-transparent shadow-none ring-0 rounded-none',
+} as const;
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null;
 let searchRequestId = 0;
