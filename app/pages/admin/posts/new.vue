@@ -295,6 +295,7 @@ import { uploadAssets } from '~/services/admin-media';
 import { listPostCategories } from '~/services/admin-post-category';
 import { adminPostEditorToolbarItems } from '~/constants/admin-post-editor-toolbar';
 import type { AdminPostCategoryItem } from '~/types/admin-post-category';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
   layout: 'admin',
@@ -516,24 +517,6 @@ const shouldShowImageResizeToolbar = ({ view, state }: { view: { hasFocus: () =>
     && state.selection.node.type.name === 'image';
 };
 
-function getRequestErrorMessage(error: unknown, fallbackMessage: string) {
-  const requestError = error as {
-    data?: {
-      statusMessage?: string;
-      message?: string;
-    };
-    statusMessage?: string;
-    message?: string;
-  };
-
-  return (
-    requestError.data?.statusMessage ||
-    requestError.data?.message ||
-    requestError.statusMessage ||
-    requestError.message ||
-    fallbackMessage
-  );
-}
 
 function clonePostState(source: PostFormState): PostFormState {
   return {
@@ -687,7 +670,7 @@ async function loadEditingPost() {
     const detail = await $fetch<AdminPostDetail>(`/api/admin/posts/${editingPostId.value}`)
     applyAdminPostDetail(detail, loadStartValue);
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '文章加载失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '文章加载失败'), 'error');
   } finally {
     loadingEditingPost.value = false;
   }
@@ -701,7 +684,7 @@ async function loadPostCategories() {
       post.value.category = categories.value[0] || '';
     }
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '分类列表加载失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '分类列表加载失败'), 'error');
   }
 }
 
@@ -754,7 +737,7 @@ async function submitPost(status: BlogPostStatus) {
 
     addToast(submitFeedback.message, 'success');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '文章保存失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '文章保存失败'), 'error');
   } finally {
     submitting.value = false;
   }
@@ -947,7 +930,7 @@ async function handleCoverImageFile(file: File) {
     post.value.cover = createPublicMediaFileUrl(uploadedAsset.id);
     addToast('封面图片已上传', 'success');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '封面图片上传失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '封面图片上传失败'), 'error');
   }
 }
 
@@ -972,7 +955,7 @@ async function handleInlineImageUpload(editor: Editor) {
     insertInlineImage(editor, uploadedAsset.id, file.name);
     addToast('正文图片已上传并插入', 'success');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '正文图片上传失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '正文图片上传失败'), 'error');
   }
 }
 
@@ -997,7 +980,7 @@ async function handleAttachmentUpload(editor: Editor) {
     insertAttachmentLink(editor, uploadedAsset.id, file.name);
     addToast('附件已上传并插入正文', 'success');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '附件上传失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '附件上传失败'), 'error');
   }
 }
 

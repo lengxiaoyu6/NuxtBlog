@@ -367,6 +367,7 @@ import { useAppToast } from '~/composables/useAppToast';
 import { usePageSettings } from '~/composables/usePageSettings';
 import type { AdminComment, AdminCommentAction, AdminCommentStatus } from '~/types/admin-comment';
 import type { GuestbookPageSettings } from '~/types/page-settings';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({ layout: 'admin' });
 
@@ -562,7 +563,7 @@ async function updateCommentStatus(commentId: string, nextStatus: AdminCommentSt
     addToast('已标记为垃圾留言', 'error');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '留言状态更新失败';
+    const message = resolveRequestErrorMessage(error, '留言状态更新失败');
     addToast(message, 'error');
   }
 }
@@ -616,7 +617,7 @@ async function savePageSettings() {
     addToast('留言板设置已保存', 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '留言板设置保存失败';
+    const message = resolveRequestErrorMessage(error, '留言板设置保存失败');
     markError(message);
     addToast(message, 'error');
   }

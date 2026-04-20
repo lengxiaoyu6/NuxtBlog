@@ -82,6 +82,7 @@
 
 <script setup lang="ts">
 import { KeyRound, Loader2, LogOut, ShieldAlert } from 'lucide-vue-next';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
   layout: false,
@@ -103,18 +104,6 @@ const isLoggingOut = ref(false);
 const feedbackMessage = ref('');
 const feedbackTone = ref<'error' | 'success'>('success');
 
-function resolveRequestError(error: unknown) {
-  const requestError = error as {
-    data?: {
-      statusMessage?: string;
-      message?: string;
-    };
-    statusMessage?: string;
-    message?: string;
-  };
-
-  return requestError.data?.statusMessage || requestError.data?.message || requestError.statusMessage || requestError.message || '密码修改失败，请稍后重试。';
-}
 
 async function handleSubmit() {
   isSubmitting.value = true;
@@ -135,7 +124,7 @@ async function handleSubmit() {
     await navigateTo('/admin');
   } catch (error) {
     feedbackTone.value = 'error';
-    feedbackMessage.value = resolveRequestError(error);
+    feedbackMessage.value = resolveRequestErrorMessage(error, '密码修改失败，请稍后重试。');
   } finally {
     isSubmitting.value = false;
   }

@@ -320,6 +320,7 @@ import {
   Check,
 } from 'lucide-vue-next';
 import { isCaptchaRequired } from '~/utils/security-form';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 const isSubmitting = ref(false);
 const isSuccess = ref(false);
@@ -510,7 +511,7 @@ async function handleSubmit() {
     };
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '友链申请提交失败';
+    const message = resolveRequestErrorMessage(error, '友链申请提交失败');
     submissionTone.value = 'error';
     submissionMessage.value = message;
     toast.add({

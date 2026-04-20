@@ -409,6 +409,7 @@ import { useAdminPageEditor } from '~/composables/useAdminPageEditor';
 import { usePageSettings } from '~/composables/usePageSettings';
 import { useAppToast } from '~/composables/useAppToast';
 import type { AboutPageSettings } from '~/types/page-settings';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({ layout: 'admin' });
 
@@ -596,7 +597,7 @@ async function savePageSettings() {
     addToast('关于我页面设置已保存', 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '关于我页面设置保存失败';
+    const message = resolveRequestErrorMessage(error, '关于我页面设置保存失败');
     markError(message);
     addToast(message, 'error');
   }

@@ -125,6 +125,7 @@
 import { LayoutDashboard, User, Lock, ArrowRight, Loader2, ArrowLeft } from 'lucide-vue-next';
 import type { AdminSessionUser } from '~~/shared/types/auth';
 import { isCaptchaRequired } from '~/utils/security-form';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
   layout: false,
@@ -160,18 +161,6 @@ const redirectPath = computed(() => {
   return typeof redirect === 'string' && redirect.startsWith('/admin') ? redirect : '/admin';
 });
 
-function resolveLoginError(error: unknown) {
-  const maybeError = error as {
-    data?: {
-      statusMessage?: string;
-      message?: string;
-    };
-    statusMessage?: string;
-    message?: string;
-  };
-
-  return maybeError.data?.statusMessage || maybeError.data?.message || maybeError.statusMessage || maybeError.message || '登录失败，请稍后重试。';
-}
 
 function resetCaptcha() {
   turnstileToken.value = '';
@@ -212,7 +201,7 @@ async function handleLogin() {
     await navigateTo(redirectPath.value);
   }
   catch (error) {
-    loginError.value = resolveLoginError(error);
+    loginError.value = resolveRequestErrorMessage(error, '登录失败，请稍后重试。');
 
     if (loginCaptchaEnabled.value) {
       resetCaptcha();

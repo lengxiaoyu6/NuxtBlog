@@ -126,6 +126,7 @@ import type { CommentItemData } from '~/types/comment';
 import type { PublicPostCommentItem } from '~/types/post-comment';
 import { useAppToast } from '~/composables/useAppToast';
 import { isCaptchaRequired } from '~/utils/security-form';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 interface CommentSubmitPayload {
   parentId?: string;
@@ -262,7 +263,7 @@ async function handleSubmit() {
       resetForm();
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : '留言提交失败';
+      const message = resolveRequestErrorMessage(error, '留言提交失败');
       submissionTone.value = 'error';
       submissionMessage.value = message;
       addToast(message, 'error');
@@ -291,7 +292,7 @@ async function handleSubmit() {
     resetForm();
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '评论提交失败';
+    const message = resolveRequestErrorMessage(error, '评论提交失败');
     submissionTone.value = 'error';
     submissionMessage.value = message;
     addToast(message, 'error');
@@ -324,7 +325,7 @@ async function handleAddReply(payload: { parentId: string; author: string; autho
       addToast('回复已提交，等待审核后展示。', 'success');
     }
     catch (error) {
-      const message = error instanceof Error ? error.message : '回复提交失败';
+      const message = resolveRequestErrorMessage(error, '回复提交失败');
       submissionTone.value = 'error';
       submissionMessage.value = message;
       addToast(message, 'error');
@@ -353,7 +354,7 @@ async function handleAddReply(payload: { parentId: string; author: string; autho
     addToast(response.message, 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '回复提交失败';
+    const message = resolveRequestErrorMessage(error, '回复提交失败');
     submissionTone.value = 'error';
     submissionMessage.value = message;
     addToast(message, 'error');
