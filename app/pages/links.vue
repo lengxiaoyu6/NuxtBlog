@@ -399,7 +399,7 @@ const LINKS_PAGE_COPY = {
 const { fetchPageSettings } = usePageSettings();
 const { fetchSiteSettings } = useSiteSettings();
 
-await Promise.all([fetchPageSettings(), fetchSiteSettings(), fetchSecurityPublicConfig()]);
+await Promise.all([fetchPageSettings(), fetchSiteSettings()]);
 
 if (!pageSettings.value.links.enabled) {
     throw createError({ statusCode: 404, statusMessage: 'Page Not Found' });
@@ -479,52 +479,21 @@ function scrollToForm() {
     }
 }
 
-function resetCaptcha() {
-    turnstileToken.value = '';
-    captchaResetNonce.value += 1;
-}
-
-function ensureCaptchaReady() {
-    if (!captchaEnabled.value || turnstileToken.value.trim()) {
-        return true;
-    }
-
-    submissionTone.value = 'error';
-    submissionMessage.value = '请先完成人机校验。';
-    toast.add({
-        title: '请先完成人机校验。',
-        color: 'warning',
-        duration: 2500,
-    });
-    return false;
-}
-
-function handleCaptchaError(message: string) {
-    submissionTone.value = 'error';
-    submissionMessage.value = message;
-}
-
 async function handleSubmit() {
     submissionMessage.value = '';
     submissionTone.value = 'success';
     isSuccess.value = false;
-
-    if (!ensureCaptchaReady()) {
-        return;
-    }
-
     isSubmitting.value = true;
 
     try {
         const response = await $fetch<{ ok: true; message: string }>('/api/links/applications', {
             method: 'POST',
             body: {
-                name: formData.value.name.trim(),
-                url: formData.value.url.trim(),
-                avatarUrl: formData.value.avatarUrl.trim(),
-                contact: formData.value.contact.trim(),
-                description: formData.value.description.trim(),
-                turnstileToken: captchaEnabled.value ? turnstileToken.value || undefined : undefined,
+                name: formData.value.name,
+                url: formData.value.url,
+                avatarUrl: formData.value.avatarUrl,
+                contact: formData.value.contact,
+                description: formData.value.description,
             },
         });
 
@@ -544,7 +513,7 @@ async function handleSubmit() {
             contact: '',
         };
     } catch (error) {
-        const message = resolveRequestErrorMessage(error, '友链申请提交失败');
+        const message = error instanceof Error ? error.message : '友链申请提交失败';
         submissionTone.value = 'error';
         submissionMessage.value = message;
         toast.add({
@@ -554,10 +523,6 @@ async function handleSubmit() {
         });
     } finally {
         isSubmitting.value = false;
-
-        if (captchaEnabled.value) {
-            resetCaptcha();
-        }
     }
 }
 </script>
