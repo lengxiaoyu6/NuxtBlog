@@ -1,45 +1,52 @@
 services:
-  db:
-    image: mysql:8.4
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: change-this-root-password
-      MYSQL_DATABASE: nuxt-blog
-      MYSQL_USER: nuxtblog
-      MYSQL_PASSWORD: change-this-db-password
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-    volumes:
-      - mysql-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pchange-this-root-password"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
+    db:
+        image: mysql:8.4
+        restart: unless-stopped
+        env_file:
+            - .env
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${MYSQL_DATABASE}
+            MYSQL_USER: ${MYSQL_USER}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+        command:
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
+        volumes:
+            - mysql-data:/var/lib/mysql
+        healthcheck:
+            test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 -p$${MYSQL_ROOT_PASSWORD}']
+            interval: 10s
+            timeout: 5s
+            retries: 12
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        APT_MIRROR: ""
-        NPM_REGISTRY: ""
-    image: nuxt-blog:latest
-    restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      NUXT_SESSION_PASSWORD: change-this-session-secret-at-least-32-chars
-      DATABASE_URL: mysql://nuxtblog:change-this-db-password@db:3306/nuxt-blog?allowPublicKeyRetrieval=true
-      SECURITY_HASH_SALT: change-this-security-hash-salt
-      TURNSTILE_SECRET_KEY: ""
-    ports:
-      - "3000:3000"
-    volumes:
-      - blog-media:/app/storage/media
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                APT_MIRROR: ${APT_MIRROR:-}
+                NPM_REGISTRY: ${NPM_REGISTRY:-}
+        image: nuxt-blog:latest
+        restart: unless-stopped
+        env_file:
+            - .env
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD}
+            DATABASE_URL: mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true
+            MEDIA_STORAGE_DIR: ${DOCKER_MEDIA_STORAGE_DIR:-/app/storage/media}
+            SECURITY_HASH_SALT: ${SECURITY_HASH_SALT}
+            TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+            DATABASE_WAIT_MAX_ATTEMPTS: ${DATABASE_WAIT_MAX_ATTEMPTS:-30}
+            DATABASE_WAIT_SLEEP_SECONDS: ${DATABASE_WAIT_SLEEP_SECONDS:-3}
+        ports:
+            - '3000:3000'
+        volumes:
+            - blog-media:${DOCKER_MEDIA_STORAGE_DIR:-/app/storage/media}
 
 volumes:
-  mysql-data:
-  blog-media:
+    mysql-data:
+    blog-media:
