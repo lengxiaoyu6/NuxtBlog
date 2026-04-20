@@ -4,19 +4,24 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        APT_MIRROR: ""
-        NPM_REGISTRY: ""
+        APT_MIRROR: ${APT_MIRROR:-}
+        NPM_REGISTRY: ${NPM_REGISTRY:-}
     image: nuxt-blog:latest
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      NUXT_SESSION_PASSWORD: change-this-session-secret-at-least-32-chars
-      DATABASE_URL: mysql://db-user:db-password@db.example.com:3306/nuxt-blog
-      SECURITY_HASH_SALT: change-this-security-hash-salt
-      TURNSTILE_SECRET_KEY: ""
+      NUXT_SESSION_PASSWORD: ${NUXT_SESSION_PASSWORD}
+      DATABASE_URL: ${DATABASE_URL}
+      MEDIA_STORAGE_DIR: ${DOCKER_MEDIA_STORAGE_DIR:-/app/storage/media}
+      SECURITY_HASH_SALT: ${SECURITY_HASH_SALT}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      DATABASE_WAIT_MAX_ATTEMPTS: ${DATABASE_WAIT_MAX_ATTEMPTS:-30}
+      DATABASE_WAIT_SLEEP_SECONDS: ${DATABASE_WAIT_SLEEP_SECONDS:-3}
     ports:
       - "3000:3000"
     volumes:
-      - blog-media:/app/storage/media
+      - blog-media:${DOCKER_MEDIA_STORAGE_DIR:-/app/storage/media}
 
 volumes:
   blog-media:
