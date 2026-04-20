@@ -68,9 +68,7 @@ const publicBlogPostSearchSelect = {
   slug: true,
   title: true,
   excerpt: true,
-  contentMarkdown: true,
   category: true,
-  tagsJson: true,
   publishedAt: true,
   updatedAt: true,
   createdAt: true,
@@ -334,11 +332,31 @@ export async function readPublishedBlogPostCategoryCounts() {
   });
 }
 
-export async function readPublishedBlogPostSearchRecords() {
+export async function searchPublishedBlogPostRecords(keyword: string, limit: number) {
   return usePrismaClient().blogPost.findMany({
-    where: createPublishedBlogPostWhere(),
+    where: {
+      ...createPublishedBlogPostWhere(),
+      OR: [
+        {
+          title: {
+            contains: keyword,
+          },
+        },
+        {
+          excerpt: {
+            contains: keyword,
+          },
+        },
+        {
+          category: {
+            contains: keyword,
+          },
+        },
+      ],
+    },
     select: publicBlogPostSearchSelect,
     orderBy: publishedBlogPostOrderBy,
+    take: limit,
   });
 }
 

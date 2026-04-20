@@ -161,8 +161,6 @@ docker compose --env-file .env -f compose.external-db.yml up --build -d
 
 Docker 镜像构建阶段同样只生成产物。应用容器真正启动前会校验 `NUXT_SESSION_PASSWORD`，缺失或长度少于 32 个字符时会退出。
 
-Docker 镜像构建阶段同样只生成产物。应用容器真正启动前会校验 `NUXT_SESSION_PASSWORD`，缺失或长度少于 32 个字符时会退出。
-
 ## 部署注意事项
 
 1. `.env.example` 中的会话密钥、数据库账号、数据库口令、连接串与安全哈希盐均为示例值，复制为 `.env` 后应全部替换。

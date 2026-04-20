@@ -40,10 +40,10 @@ import {
   readPublishedBlogPostFeedRecords,
   readPublishedBlogPostListPage,
   readPublishedNeighborBlogPostRecords,
-  readPublishedBlogPostSearchRecords,
   readPublishedBlogPostStatsRecord,
   readPublishedBlogPostTagRecords,
   readPopularBlogPostRecords,
+  searchPublishedBlogPostRecords,
   updateBlogPostRecord,
 } from '../repositories/post.repository';
 import { countPendingPostCommentRecords, countPostCommentRecords } from '../repositories/post-comment.repository';
@@ -238,19 +238,6 @@ function ensurePostIdentifier(identifier: string) {
   }
 
   return normalizedIdentifier;
-}
-
-function createPostSearchBucket(record: Awaited<ReturnType<typeof readPublishedBlogPostSearchRecords>>[number]) {
-  return [
-    record.title,
-    record.excerpt,
-    record.slug ?? '',
-    record.category,
-    record.contentMarkdown,
-    ...parseTags(record.tagsJson),
-  ]
-    .join(' ')
-    .toLowerCase();
 }
 
 function createTagInsightItems(records: Awaited<ReturnType<typeof readPublishedBlogPostTagRecords>>) {
@@ -771,25 +758,22 @@ export async function increasePublicPostLikes(id: string): Promise<PublicPostInt
 }
 
 export async function searchPublishedPosts(keyword: string): Promise<PostSearchResultItem[]> {
-  const normalizedKeyword = normalizeText(keyword).toLowerCase();
+  const normalizedKeyword = normalizeText(keyword);
 
   if (!normalizedKeyword) {
     return [];
   }
 
-  const records = await readPublishedBlogPostSearchRecords();
+  const records = await searchPublishedBlogPostRecords(normalizedKeyword, SEARCH_RESULT_LIMIT);
 
-  return records
-    .filter((record) => createPostSearchBucket(record).includes(normalizedKeyword))
-    .slice(0, SEARCH_RESULT_LIMIT)
-    .map((record) => ({
-      id: record.id,
-      identifier: resolvePostPublicIdentifier(record),
-      title: record.title,
-      excerpt: record.excerpt,
-      category: record.category,
-      date: formatDateInShanghai(record.publishedAt ?? record.updatedAt ?? record.createdAt),
-    }));
+  return records.map((record) => ({
+    id: record.id,
+    identifier: resolvePostPublicIdentifier(record),
+    title: record.title,
+    excerpt: record.excerpt,
+    category: record.category,
+    date: formatDateInShanghai(record.publishedAt ?? record.updatedAt ?? record.createdAt),
+  }));
 }
 
 export async function readPostInsights(): Promise<PostInsightsResponse> {
