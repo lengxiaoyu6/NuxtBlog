@@ -6,7 +6,7 @@
       <div
         class="w-20 h-20 bg-slate-900 dark:bg-brand-600 rounded-2xl flex items-center justify-center text-white text-4xl font-black shadow-xl shadow-slate-200 dark:shadow-none font-serif"
       >
-        T
+        {{ brandMark }}
       </div>
       <div
         class="absolute -inset-4 border-2 border-slate-100 dark:border-brand-500/30 border-t-slate-900 dark:border-t-brand-500 rounded-full animate-spin"
@@ -15,7 +15,7 @@
 
     <div class="text-center">
       <h2 class="text-slate-900 dark:text-white text-xl font-bold tracking-widest mb-2 font-serif">
-        TECHFLOW.BLOG
+        {{ siteName }}
       </h2>
       <div class="w-48 h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
         <div class="h-full bg-slate-900 dark:bg-brand-500 loading-bar" />
@@ -23,6 +23,16 @@
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { DEFAULT_SITE_SETTINGS } from '~/constants/site-settings';
+
+const { settings } = useSiteSettings();
+
+const siteName = computed(() => settings.value.site.name.trim() || DEFAULT_SITE_SETTINGS.site.name);
+const brandMark = computed(() => siteName.value.charAt(0).toUpperCase() || 'T');
+</script>
 
 <style scoped>
 .loading-bar {
