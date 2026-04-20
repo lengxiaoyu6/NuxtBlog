@@ -8,7 +8,7 @@
             ref="inputRef"
             v-model.trim="query"
             type="text"
-            placeholder="搜索文章标题、摘要、标签..."
+            placeholder="搜索文章标题、摘要、分类..."
             class="flex-1 bg-transparent outline-none text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
             @keydown.enter.prevent="submitSearch"
           />
