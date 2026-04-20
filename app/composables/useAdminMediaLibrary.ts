@@ -24,6 +24,7 @@ import type {
   MediaUploadTask,
   MediaViewMode,
 } from '~/types/admin-media';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 const maxImageSize = 10 * 1024 * 1024;
 const maxDocumentSize = 10 * 1024 * 1024;
@@ -163,32 +164,6 @@ export function useAdminMediaLibrary() {
     return null;
   }
 
-  function extractUploadErrorMessage(error: unknown) {
-    if (typeof error === 'object' && error) {
-      const normalizedError = error as {
-        data?: {
-          statusMessage?: string;
-          message?: string;
-        };
-        statusMessage?: string;
-        message?: string;
-      };
-      const candidateMessages = [
-        normalizedError.data?.statusMessage,
-        normalizedError.data?.message,
-        normalizedError.statusMessage,
-        normalizedError.message,
-      ];
-
-      for (const item of candidateMessages) {
-        if (typeof item === 'string' && item.trim()) {
-          return item.trim();
-        }
-      }
-    }
-
-    return '资源上传失败，请稍后重试';
-  }
 
   function validateUploadFile(file: File) {
     const extension = readFileExtension(file.name);
@@ -596,7 +571,7 @@ export function useAdminMediaLibrary() {
       addToast('资源上传完成', 'success');
     }
     catch (error) {
-      const errorMessage = extractUploadErrorMessage(error);
+      const errorMessage = resolveRequestErrorMessage(error, '资源上传失败，请稍后重试');
 
       for (const taskId of currentBatchTaskIds) {
         const task = findUploadTask(taskId);
@@ -641,7 +616,7 @@ export function useAdminMediaLibrary() {
     catch (error) {
       task.progress = 0;
       task.status = 'failed';
-      task.errorMessage = extractUploadErrorMessage(error);
+      task.errorMessage = resolveRequestErrorMessage(error, '资源上传失败，请稍后重试');
       addToast(task.errorMessage, 'error');
     }
   }

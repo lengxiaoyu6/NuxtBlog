@@ -961,6 +961,7 @@ import type {
   AdminSettingsSaveState,
   SiteSocialIcon,
 } from '~/types/admin-settings';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
   layout: 'admin',
@@ -1330,7 +1331,7 @@ async function saveSettings() {
     addToast('设置已保存', 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '设置保存失败';
+    const message = resolveRequestErrorMessage(error, '设置保存失败');
     saveState.value = 'error';
     feedbackTone.value = 'error';
     feedbackMessage.value = message;

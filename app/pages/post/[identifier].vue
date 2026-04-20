@@ -175,6 +175,7 @@ import {
   rememberPostView,
   shouldCountPostView,
 } from '~/utils/post-interaction.mjs';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 const route = useRoute();
 const identifier = computed(() => String(route.params.identifier ?? ''));
@@ -263,24 +264,6 @@ onBeforeUnmount(() => {
   }
 });
 
-function getRequestErrorMessage(error: unknown, fallbackMessage: string) {
-  const requestError = error as {
-    data?: {
-      statusMessage?: string;
-      message?: string;
-    };
-    statusMessage?: string;
-    message?: string;
-  };
-
-  return (
-    requestError.data?.statusMessage ||
-    requestError.data?.message ||
-    requestError.statusMessage ||
-    requestError.message ||
-    fallbackMessage
-  );
-}
 
 function syncViewedAtStorage(now = Date.now()) {
   const nextViewedAtMap = readPostViewedAtMap(localStorage.getItem(postViewedAtStorageKey), now);
@@ -340,7 +323,7 @@ async function toggleLike() {
     applyInteractionResponse(currentPost.id, response);
     await refreshNuxtData('post-insights');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '文章点赞失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '文章点赞失败'), 'error');
   } finally {
     submittingLike.value = false;
   }

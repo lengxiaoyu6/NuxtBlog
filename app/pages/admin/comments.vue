@@ -198,6 +198,7 @@ import {
 } from 'lucide-vue-next';
 import { useAppToast } from '~/composables/useAppToast';
 import type { AdminComment, AdminCommentAction, AdminCommentStatus } from '~/types/admin-comment';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
   layout: 'admin',
@@ -351,7 +352,7 @@ async function updateCommentStatus(commentId: string, nextStatus: AdminCommentSt
     addToast('已标记为垃圾评论', 'error');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '评论状态更新失败';
+    const message = resolveRequestErrorMessage(error, '评论状态更新失败');
     addToast(message, 'error');
   }
 }

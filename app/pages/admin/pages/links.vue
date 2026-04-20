@@ -374,6 +374,7 @@ import { useAppToast } from '~/composables/useAppToast';
 import { usePageSettings } from '~/composables/usePageSettings';
 import type { AdminFriendLinkItem } from '~/types/friend-link';
 import type { FriendLinkStatus, LinksPageSettings } from '~/types/page-settings';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({ layout: 'admin' });
 
@@ -584,7 +585,7 @@ async function refreshFriendLinks(showToast = false) {
     }
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '友情链接列表读取失败';
+    const message = resolveRequestErrorMessage(error, '友情链接列表读取失败');
     setFriendFeedback(message, 'error');
     addToast(message, 'error');
   }
@@ -653,7 +654,7 @@ async function saveFriendLink(item: FriendLinkEditorItem) {
     addToast(successMessage, 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '友链保存失败';
+    const message = resolveRequestErrorMessage(error, '友链保存失败');
     setFriendFeedback(message, 'error');
     addToast(message, 'error');
   }
@@ -680,7 +681,7 @@ async function deleteFriendLink(item: FriendLinkEditorItem) {
     addToast('友链已删除', 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '友链删除失败';
+    const message = resolveRequestErrorMessage(error, '友链删除失败');
     setFriendFeedback(message, 'error');
     addToast(message, 'error');
   }
@@ -712,7 +713,7 @@ async function savePageSettings() {
     addToast('友情链接设置已保存', 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '友情链接设置保存失败';
+    const message = resolveRequestErrorMessage(error, '友情链接设置保存失败');
     markError(message);
     addToast(message, 'error');
   }

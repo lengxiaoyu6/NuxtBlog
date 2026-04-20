@@ -221,6 +221,7 @@ import { useAdminPageEditor } from '~/composables/useAdminPageEditor';
 import { useAppToast } from '~/composables/useAppToast';
 import { usePageSettings } from '~/composables/usePageSettings';
 import type { ProjectsPageSettings } from '~/types/page-settings';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({ layout: 'admin' });
 
@@ -382,7 +383,7 @@ async function savePageSettings() {
     addToast('项目展示设置已保存', 'success');
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : '项目展示设置保存失败';
+    const message = resolveRequestErrorMessage(error, '项目展示设置保存失败');
     markError(message);
     addToast(message, 'error');
   }

@@ -168,6 +168,7 @@ import {
   renamePostCategory,
 } from '~/services/admin-post-category';
 import type { AdminPostCategoryItem } from '~/types/admin-post-category';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
   layout: 'admin',
@@ -185,30 +186,12 @@ const submittingDelete = ref(false);
 
 const totalPostCount = computed(() => categories.value.reduce((sum, item) => sum + item.postCount, 0));
 
-function getRequestErrorMessage(error: unknown, fallbackMessage: string) {
-  const requestError = error as {
-    data?: {
-      statusMessage?: string;
-      message?: string;
-    };
-    statusMessage?: string;
-    message?: string;
-  };
-
-  return (
-    requestError.data?.statusMessage
-    || requestError.data?.message
-    || requestError.statusMessage
-    || requestError.message
-    || fallbackMessage
-  );
-}
 
 async function refreshCategories() {
   try {
     categories.value = await listPostCategories();
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '分类列表加载失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '分类列表加载失败'), 'error');
   }
 }
 
@@ -244,7 +227,7 @@ async function handleCreateCategory() {
     await refreshCategories();
     addToast('分类已创建', 'success');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '分类创建失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '分类创建失败'), 'error');
   } finally {
     submittingCreate.value = false;
   }
@@ -264,7 +247,7 @@ async function handleRenameCategory(categoryId: string) {
     await refreshCategories();
     addToast('分类名称已更新', 'success');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '分类重命名失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '分类重命名失败'), 'error');
   } finally {
     submittingRename.value = false;
   }
@@ -283,7 +266,7 @@ async function handleDeleteCategory() {
     await refreshCategories();
     addToast('分类已删除', 'success');
   } catch (error) {
-    addToast(getRequestErrorMessage(error, '分类删除失败'), 'error');
+    addToast(resolveRequestErrorMessage(error, '分类删除失败'), 'error');
   } finally {
     submittingDelete.value = false;
   }

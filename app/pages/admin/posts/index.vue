@@ -373,6 +373,7 @@ import {
     CheckCircle,
     FileX,
 } from 'lucide-vue-next';
+import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
     layout: 'admin',
@@ -422,24 +423,6 @@ const statuses = [
     { id: 'draft', label: '草稿箱' },
 ] as const;
 
-function getRequestErrorMessage(error: unknown, fallbackMessage: string) {
-    const requestError = error as {
-        data?: {
-            statusMessage?: string;
-            message?: string;
-        };
-        statusMessage?: string;
-        message?: string;
-    };
-
-    return (
-        requestError.data?.statusMessage ||
-        requestError.data?.message ||
-        requestError.statusMessage ||
-        requestError.message ||
-        fallbackMessage
-    );
-}
 
 async function refreshPosts(): Promise<boolean> {
     loading.value = true;
@@ -461,7 +444,7 @@ async function refreshPosts(): Promise<boolean> {
         return true;
     } catch (error) {
         if (import.meta.client) {
-            addToast(getRequestErrorMessage(error, '文章列表加载失败'), 'error');
+            addToast(resolveRequestErrorMessage(error, '文章列表加载失败'), 'error');
         }
 
         return false;
@@ -483,7 +466,7 @@ async function refreshPostCategories(): Promise<boolean> {
     } catch (error) {
         postCategories.value = [];
         if (import.meta.client) {
-            addToast(getRequestErrorMessage(error, '分类列表加载失败，当前改为文章数据统计'), 'warning');
+            addToast(resolveRequestErrorMessage(error, '分类列表加载失败，当前改为文章数据统计'), 'warning');
         }
         return false;
     }
@@ -644,7 +627,7 @@ function handleDelete(id: number) {
                 }
             } catch (error) {
                 if (import.meta.client) {
-                    addToast(getRequestErrorMessage(error, '文章删除失败'), 'error');
+                    addToast(resolveRequestErrorMessage(error, '文章删除失败'), 'error');
                 }
             }
         },
@@ -685,7 +668,7 @@ function handleBulkDelete() {
                 await refreshPostsWithPageFallback();
 
                 if (import.meta.client) {
-                    addToast(getRequestErrorMessage(error, '批量删除失败'), 'error');
+                    addToast(resolveRequestErrorMessage(error, '批量删除失败'), 'error');
                 }
             }
         },
@@ -712,7 +695,7 @@ function handleBulkPublish() {
                 }
             } catch (error) {
                 if (import.meta.client) {
-                    addToast(getRequestErrorMessage(error, '批量发布失败'), 'error');
+                    addToast(resolveRequestErrorMessage(error, '批量发布失败'), 'error');
                 }
             }
         },
