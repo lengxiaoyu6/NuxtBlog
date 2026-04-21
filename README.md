@@ -110,6 +110,31 @@ pnpm dev
 2. 后台登录：`http://localhost:3000/admin/login`
 3. RSS：`http://localhost:3000/rss`
 
+## 模块开发
+
+后台模块体系当前以内置“邮件通知”模块为基准实现，相关代码位置如下：
+
+1. 模块注册信息位于 `server/services/module-center.service.ts`，统一维护模块键名、标题、版本、简介、配置页地址，以及默认安装和启用状态。
+2. 模块状态持久化位于 `server/repositories/module-center.repository.ts`，本地开发环境会写入 `.data/module-center/state.json`。需要重置安装状态时，可删除该文件后重新启动服务。
+3. 后台模块接口位于 `server/api/admin/modules/**`，列表、详情、安装、启用、停用、卸载、配置读取、配置保存与测试动作都从这里进入。
+4. 模块页面位于 `app/pages/admin/modules/index.vue` 与 `app/pages/admin/modules/[moduleKey].vue`，模块名称、版本、状态标签和模块专属配置区都在这里呈现。
+5. 运行期模块目录位于 `modules/notification-center`。`module.ts` 负责注册 Nuxt 模块，`runtime/plugin.ts` 负责挂接 Nitro hook 并将事件交给通知投递服务。
+6. 通知事件名称集中定义在 `server/services/notification-event.service.ts`，当前内置评论提交、评论审核、留言提交、留言审核，以及投递排队、投递成功、投递失败事件。
+
+新增模块时，建议按以下顺序处理：
+
+1. 在 `shared/types/module-center.ts` 与 `server/services/module-center.service.ts` 补充模块元数据，并为模块分配稳定的 `key`。
+2. 在 `modules/<module-key>` 下建立模块入口与运行期插件，将业务副作用控制在模块目录或对应服务中。
+3. 在 `server/api/admin/modules/<module-key>` 下补齐模块专属接口，在 `app/pages/admin/modules/[moduleKey].vue` 中增加对应配置区，保持模块中心列表页只负责模块总览。
+4. 如果模块需要持久化配置或投递记录，优先沿用现有仓储与服务分层：接口层负责鉴权与参数接入，服务层负责规则编排，仓储层负责文件或数据库读写。
+5. 如果模块依赖运行期事件，先在 `server/services/notification-event.service.ts` 中定义事件名与负载结构，再在模块运行期插件中订阅，避免事件名分散在业务代码中。
+
+当前邮件通知模块还包含以下约束：
+
+1. SMTP 口令通过 `ENCRYPTION_SECRET_KEY` 加密保存，旧变量 `NOTIFICATION_SECRET_KEY` 继续兼容读取。
+2. 通知投递记录写入 Prisma 模型 `NotificationDelivery`，便于排查发信状态。
+3. 评论待审核、二级评论回复一级评论、留言待审核均通过模块事件进入发信服务，访客审核状态变化继续通过站内页面呈现。
+
 ## 生产构建与启动
 
 构建正式产物：
