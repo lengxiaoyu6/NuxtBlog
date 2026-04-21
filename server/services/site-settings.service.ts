@@ -1,14 +1,29 @@
 import { cloneSiteSettings, DEFAULT_SITE_SETTINGS } from '../../app/constants/site-settings';
-import type { AdminSettingsForm } from '../../app/types/admin-settings';
+import type {
+  AdminSettingsForm,
+  SiteNotificationSettings,
+} from '../../app/types/admin-settings';
 import { readSiteSettingsRecord, upsertSiteSettingsRecord } from '../repositories/site-settings.repository';
 import {
   buildPublicSecurityConfig,
   normalizeSiteSecuritySettings,
   validateSecuritySettings,
 } from './security-settings.service';
+import { normalizeNotificationSettings } from './notification-settings.shared';
 import { ensureSeedPageSettings } from './page-settings.service';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function createRequestError(statusCode: number, statusMessage: string) {
+  if (typeof globalThis.createError === 'function') {
+    return globalThis.createError({ statusCode, statusMessage });
+  }
+
+  return Object.assign(new Error(statusMessage), {
+    statusCode,
+    statusMessage,
+  });
+}
 
 function isValidAbsoluteUrl(value: string) {
   try {
@@ -32,57 +47,57 @@ function normalizeSiteSettings(input: AdminSettingsForm) {
       order: index + 1,
     })),
     security: normalizeSiteSecuritySettings(input.security),
+    notification: normalizeNotificationSettings(input.notification, {
+      passwordConfigured: input.notification.smtp.passwordConfigured,
+    }),
   } satisfies AdminSettingsForm;
 }
 
 function ensureTextMaxLength(value: string, maxLength: number, message: string) {
   if (value.trim().length > maxLength) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: message,
-    });
+    throw createRequestError(400, message);
   }
 }
 
 function validateSiteSettings(input: AdminSettingsForm) {
   if (!input.site.name.trim()) {
-    throw createError({ statusCode: 400, statusMessage: '请输入站点名称' });
+    throw createRequestError(400, '请输入站点名称');
   }
 
   if (!input.site.url.trim() || !isValidAbsoluteUrl(input.site.url.trim())) {
-    throw createError({ statusCode: 400, statusMessage: '请输入有效的站点链接' });
+    throw createRequestError(400, '请输入有效的站点链接');
   }
 
   ensureTextMaxLength(input.site.description, 160, '站点简介需控制在 160 个字符以内');
 
   if (!input.owner.name.trim()) {
-    throw createError({ statusCode: 400, statusMessage: '请输入站长昵称' });
+    throw createRequestError(400, '请输入站长昵称');
   }
 
   if (!input.owner.location.trim()) {
-    throw createError({ statusCode: 400, statusMessage: '请输入所在地点' });
+    throw createRequestError(400, '请输入所在地点');
   }
 
   if (!input.owner.tagline.trim()) {
-    throw createError({ statusCode: 400, statusMessage: '请输入身份短句' });
+    throw createRequestError(400, '请输入身份短句');
   }
 
   ensureTextMaxLength(input.owner.bio, 180, '个人简介需控制在 180 个字符以内');
 
   if (!EMAIL_PATTERN.test(input.footer.contactEmail.trim())) {
-    throw createError({ statusCode: 400, statusMessage: '请输入有效的联系邮箱' });
+    throw createRequestError(400, '请输入有效的联系邮箱');
   }
 
   if (!input.footer.copyright.trim()) {
-    throw createError({ statusCode: 400, statusMessage: '请输入版权文案' });
+    throw createRequestError(400, '请输入版权文案');
   }
 
   if (!input.footer.icpText.trim()) {
-    throw createError({ statusCode: 400, statusMessage: '请输入备案号文本' });
+    throw createRequestError(400, '请输入备案号文本');
   }
 
   if (!input.footer.icpLink.trim() || !isValidAbsoluteUrl(input.footer.icpLink.trim())) {
-    throw createError({ statusCode: 400, statusMessage: '请输入有效的备案链接' });
+    throw createRequestError(400, '请输入有效的备案链接');
   }
 
   ensureTextMaxLength(input.footer.note, 140, '补充说明需控制在 140 个字符以内');
@@ -90,6 +105,10 @@ function validateSiteSettings(input: AdminSettingsForm) {
 }
 
 function toSiteSettingsForm(record: NonNullable<Awaited<ReturnType<typeof readSiteSettingsRecord>>>) {
+  const persistedNotification = record.notificationSettingsJson && typeof record.notificationSettingsJson === 'object'
+    ? record.notificationSettingsJson
+    : null;
+
   return {
     site: {
       name: record.siteName,
@@ -132,6 +151,9 @@ function toSiteSettingsForm(record: NonNullable<Awaited<ReturnType<typeof readSi
       turnstileSiteKey: record.turnstileSiteKey ?? '',
       ...(record.securitySettingsJson && typeof record.securitySettingsJson === 'object' ? record.securitySettingsJson : {}),
     }),
+    notification: normalizeNotificationSettings(persistedNotification as Partial<SiteNotificationSettings> | null, {
+      passwordConfigured: Boolean(record.notificationSecretsCiphertext),
+    }),
   } satisfies AdminSettingsForm;
 }
 
@@ -161,6 +183,11 @@ export async function readSiteSecuritySettings() {
   return settings.security;
 }
 
+export async function readNotificationSettings() {
+  const { readNotificationModuleRuntimeSettings } = await import('./notification-module.service');
+  return await readNotificationModuleRuntimeSettings();
+}
+
 export async function readPublicSiteSettings() {
   const settings = await readSiteSettings();
 
@@ -182,7 +209,7 @@ export async function readPublicSecurityConfig() {
 export async function saveSiteSettings(input: AdminSettingsForm) {
   const normalizedInput = normalizeSiteSettings(input);
   validateSiteSettings(normalizedInput);
-  const savedRecord = await upsertSiteSettingsRecord(normalizedInput);
 
+  const savedRecord = await upsertSiteSettingsRecord(normalizedInput);
   return toSiteSettingsForm(savedRecord);
 }

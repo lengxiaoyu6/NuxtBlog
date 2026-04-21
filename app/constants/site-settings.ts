@@ -108,6 +108,27 @@ export const DEFAULT_SITE_SETTINGS: AdminSettingsForm = {
     note: '',
   },
   security: cloneSiteSecuritySettings(DEFAULT_SITE_SECURITY_SETTINGS),
+  notification: {
+    enabled: false,
+    subjectPrefix: '[Blog 通知]',
+    adminRecipients: [],
+    smtp: {
+      host: '',
+      port: 465,
+      secure: true,
+      username: '',
+      password: '',
+      passwordConfigured: false,
+      fromName: '',
+      fromEmail: '',
+      replyToEmail: '',
+    },
+    events: {
+      postCommentCreated: true,
+      postCommentReply: true,
+      guestbookCreated: true,
+    },
+  },
 };
 
 export function cloneSiteSettings(settings: AdminSettingsForm = DEFAULT_SITE_SETTINGS): AdminSettingsForm {
@@ -118,5 +139,11 @@ export function cloneSiteSettings(settings: AdminSettingsForm = DEFAULT_SITE_SET
     navItems: settings.navItems.map((item) => ({ ...item })),
     footer: { ...settings.footer },
     security: cloneSiteSecuritySettings(settings.security),
+    notification: {
+      ...settings.notification,
+      adminRecipients: [...settings.notification.adminRecipients],
+      smtp: { ...settings.notification.smtp },
+      events: { ...settings.notification.events },
+    },
   };
 }

@@ -44,6 +44,32 @@ export interface SiteFooterSettings {
   note: string;
 }
 
+export interface SiteNotificationEventSettings {
+  postCommentCreated: boolean;
+  postCommentReply: boolean;
+  guestbookCreated: boolean;
+}
+
+export interface SiteNotificationSmtpSettings {
+  host: string;
+  port: number;
+  secure: boolean;
+  username: string;
+  password: string;
+  passwordConfigured: boolean;
+  fromName: string;
+  fromEmail: string;
+  replyToEmail: string;
+}
+
+export interface SiteNotificationSettings {
+  enabled: boolean;
+  subjectPrefix: string;
+  adminRecipients: string[];
+  smtp: SiteNotificationSmtpSettings;
+  events: SiteNotificationEventSettings;
+}
+
 export interface AdminSettingsForm {
   site: SiteProfileSettings;
   owner: SiteOwnerSettings;
@@ -51,6 +77,7 @@ export interface AdminSettingsForm {
   navItems: SiteNavItem[];
   footer: SiteFooterSettings;
   security: SiteSecuritySettings;
+  notification: SiteNotificationSettings;
 }
 
 export type AdminSettingsSaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error';

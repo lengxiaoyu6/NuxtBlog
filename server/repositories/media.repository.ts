@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { usePrismaClient } from '../utils/prisma';
 
-const mediaAssetInclude = {
+const mediaAssetInclude = Prisma.validator<Prisma.MediaAssetInclude>()({
   tags: {
     include: {
       tag: true,
@@ -15,7 +15,7 @@ const mediaAssetInclude = {
       },
     ],
   },
-} as const;
+});
 
 export type MediaAssetRecord = Prisma.MediaAssetGetPayload<{
   include: typeof mediaAssetInclude;
@@ -138,7 +138,7 @@ export async function createMediaFolderRecord(input: {
 }) {
   return usePrismaClient().mediaFolder.create({
     data: {
-      id: input.id,
+      id: input.id ?? randomUUID(),
       name: input.name,
       parentId: input.parentId,
       sortOrder: input.sortOrder,

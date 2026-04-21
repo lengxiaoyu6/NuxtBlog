@@ -9,7 +9,7 @@ export function isMissingSessionPasswordPlaceholder(value: string | null | undef
   return String(value || '').startsWith(MISSING_SESSION_PASSWORD_PREFIX);
 }
 
-export function resolveSessionPasswordRuntimeValue(value: string | null | undefined) {
+export function resolveSessionPasswordRuntimeValue(value?: string | null) {
   const normalizedValue = String(value || '').trim();
 
   if (normalizedValue) {

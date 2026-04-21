@@ -288,6 +288,69 @@
                 <div class="lg:col-span-2 hidden lg:block">
                     <RightSidebar />
                 </div>
+
+                <div class="space-y-2">
+                  <label class="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">{{ LINKS_PAGE_COPY.descriptionLabel }}</label>
+                  <div class="relative">
+                    <FileText class="absolute left-4 top-5 text-slate-400" :size="18" />
+                    <textarea
+                      v-model="formData.description"
+                      required
+                      rows="3"
+                      :placeholder="LINKS_PAGE_COPY.descriptionPlaceholder"
+                      class="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-3xl outline-none focus:border-brand-600 transition-colors text-sm dark:text-white resize-none"
+                    />
+                  </div>
+                </div>
+
+                <TurnstileWidget
+                  v-model="turnstileToken"
+                  :enabled="captchaEnabled"
+                  :site-key="securityConfig.turnstileSiteKey"
+                  :reset-nonce="captchaResetNonce"
+                  @error="handleCaptchaError"
+                />
+
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-6 pt-4">
+                  <div class="space-y-2">
+                    <div class="flex items-center gap-2 text-xs text-slate-400">
+                      <Info :size="14" />
+                      <span>{{ LINKS_PAGE_COPY.submitHint }}</span>
+                    </div>
+                    <p
+                      v-if="submissionMessage"
+                      class="text-sm"
+                      :class="submissionTone === 'error' ? 'text-rose-500 dark:text-rose-300' : 'text-emerald-600 dark:text-emerald-300'"
+                    >
+                      {{ submissionMessage }}
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    :disabled="isSubmitting"
+                    :class="
+                      isSuccess
+                        ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+                        : 'bg-brand-600 hover:bg-brand-700 text-white shadow-brand-500/20'
+                    "
+                    class="relative flex items-center gap-2 px-12 py-4 font-bold rounded-2xl shadow-xl transition-all active:scale-95 group overflow-hidden disabled:opacity-80"
+                  >
+                    <template v-if="isSubmitting">
+                      <Plus :size="20" class="rotate-45 animate-spin" />
+                      {{ LINKS_PAGE_COPY.submittingText }}
+                    </template>
+                    <template v-else-if="isSuccess">
+                      <CheckCircle2 :size="20" />
+                      {{ LINKS_PAGE_COPY.successText }}
+                    </template>
+                    <template v-else>
+                      {{ LINKS_PAGE_COPY.submitText }}
+                      <Send :size="18" class="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                    </template>
+                  </button>
+                </div>
+              </form>
             </div>
         </div>
 
@@ -399,7 +462,11 @@ const LINKS_PAGE_COPY = {
 const { fetchPageSettings } = usePageSettings();
 const { fetchSiteSettings } = useSiteSettings();
 
-await Promise.all([fetchPageSettings(), fetchSiteSettings()]);
+await Promise.all([
+  fetchPageSettings(),
+  fetchSiteSettings(),
+  fetchSecurityPublicConfig(),
+]);
 
 if (!pageSettings.value.links.enabled) {
     throw createError({ statusCode: 404, statusMessage: 'Page Not Found' });
@@ -479,50 +546,87 @@ function scrollToForm() {
     }
 }
 
+function resetCaptcha() {
+  turnstileToken.value = '';
+  captchaResetNonce.value += 1;
+}
+
+function ensureCaptchaReady() {
+  if (!captchaEnabled.value || turnstileToken.value.trim()) {
+    return true;
+  }
+
+  submissionTone.value = 'error';
+  submissionMessage.value = '请先完成人机校验。';
+  toast.add({
+    title: '请先完成人机校验。',
+    color: 'warning',
+    duration: 2500,
+  });
+  return false;
+}
+
+function handleCaptchaError(message: string) {
+  submissionTone.value = 'error';
+  submissionMessage.value = message;
+}
+
 async function handleSubmit() {
-    submissionMessage.value = '';
+  submissionMessage.value = '';
+  submissionTone.value = 'success';
+  isSuccess.value = false;
+
+  if (!ensureCaptchaReady()) {
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    const response = await $fetch<{ ok: true; message: string }>('/api/links/applications', {
+      method: 'POST',
+      body: {
+        name: formData.value.name.trim(),
+        url: formData.value.url.trim(),
+        avatarUrl: formData.value.avatarUrl.trim(),
+        contact: formData.value.contact.trim(),
+        description: formData.value.description.trim(),
+        turnstileToken: captchaEnabled.value ? turnstileToken.value || undefined : undefined,
+      },
+    });
+
     submissionTone.value = 'success';
-    isSuccess.value = false;
-    isSubmitting.value = true;
+    submissionMessage.value = response.message;
+    isSuccess.value = true;
+    toast.add({
+      title: response.message,
+      color: 'success',
+      duration: 2500,
+    });
+    formData.value = {
+      name: '',
+      url: '',
+      description: '',
+      avatarUrl: '',
+      contact: '',
+    };
+  }
+  catch (error) {
+    const message = resolveRequestErrorMessage(error, '友链申请提交失败');
+    submissionTone.value = 'error';
+    submissionMessage.value = message;
+    toast.add({
+      title: message,
+      color: 'error',
+      duration: 3000,
+    });
+  }
+  finally {
+    isSubmitting.value = false;
 
-    try {
-        const response = await $fetch<{ ok: true; message: string }>('/api/links/applications', {
-            method: 'POST',
-            body: {
-                name: formData.value.name,
-                url: formData.value.url,
-                avatarUrl: formData.value.avatarUrl,
-                contact: formData.value.contact,
-                description: formData.value.description,
-            },
-        });
-
-        submissionTone.value = 'success';
-        submissionMessage.value = response.message;
-        isSuccess.value = true;
-        toast.add({
-            title: response.message,
-            color: 'success',
-            duration: 2500,
-        });
-        formData.value = {
-            name: '',
-            url: '',
-            description: '',
-            avatarUrl: '',
-            contact: '',
-        };
-    } catch (error) {
-        const message = error instanceof Error ? error.message : '友链申请提交失败';
-        submissionTone.value = 'error';
-        submissionMessage.value = message;
-        toast.add({
-            title: message,
-            color: 'error',
-            duration: 3000,
-        });
-    } finally {
-        isSubmitting.value = false;
+    if (captchaEnabled.value) {
+      resetCaptcha();
     }
+  }
 }
 </script>
