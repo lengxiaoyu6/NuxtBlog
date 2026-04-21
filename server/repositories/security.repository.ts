@@ -1,12 +1,24 @@
 import type { SecurityDimension } from '../services/security-rate-limit.service';
 import { usePrismaClient } from '../utils/prisma';
 
+interface SecurityThrottleStateRecord {
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+  action: string;
+  dimension: SecurityDimension;
+  subjectHash: string;
+  hits: number;
+  windowStartedAt: Date;
+  blockedUntil: Date | null;
+}
+
 export async function findSecurityThrottleState(input: {
   action: string;
   dimension: SecurityDimension;
   subjectHash: string;
-}) {
-  return usePrismaClient().securityThrottleState.findUnique({
+}): Promise<SecurityThrottleStateRecord | null> {
+  const record = await usePrismaClient().securityThrottleState.findUnique({
     where: {
       action_dimension_subjectHash: {
         action: input.action,
@@ -15,6 +27,15 @@ export async function findSecurityThrottleState(input: {
       },
     },
   });
+
+  if (!record) {
+    return null;
+  }
+
+  return {
+    ...record,
+    dimension: input.dimension,
+  };
 }
 
 export async function saveSecurityThrottleState(input: {

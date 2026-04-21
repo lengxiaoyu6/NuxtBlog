@@ -1,6 +1,6 @@
 import { isIP } from 'node:net';
 import { isAbsolute, resolve } from 'node:path';
-import { IPv4, IPv6, loadContentFromFile, newWithBuffer, verifyFromFile } from 'ip2region.js';
+import { IPv4, IPv6, loadContentFromFile, newWithBuffer } from 'ip2region.js';
 import { normalizeRegionName } from '../utils/region-normalizer';
 
 export const PRIVATE_IP_REGION = '内网地址';
@@ -44,7 +44,12 @@ function isPrivateIpv4(ip: string) {
     return false;
   }
 
-  const [first, second] = segments;
+  const first = segments[0];
+  const second = segments[1];
+  if (first === undefined || second === undefined) {
+    return false;
+  }
+
   return first === 0
     || first === 10
     || first === 127
@@ -109,7 +114,6 @@ function resolveDbPath(dbPath: string) {
 
 function createFileSearcher(version: typeof IPv4 | typeof IPv6, dbPath: string) {
   const resolvedDbPath = resolveDbPath(dbPath);
-  verifyFromFile(resolvedDbPath);
   const contentBuffer = loadContentFromFile(resolvedDbPath);
   const searcher = newWithBuffer(version, contentBuffer);
   return (ip: string) => searcher.search(ip);

@@ -19,6 +19,7 @@ const adminPostCommentInclude = {
     select: {
       id: true,
       authorName: true,
+      authorEmail: true,
     },
   },
 } as const;

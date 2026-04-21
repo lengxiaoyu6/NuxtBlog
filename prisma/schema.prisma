@@ -53,6 +53,12 @@ enum PostCommentStatus {
   spam
 }
 
+enum NotificationDeliveryStatus {
+  queued
+  sent
+  failed
+}
+
 enum MediaAssetKind {
   image
   document
@@ -114,9 +120,11 @@ model SiteSettings {
   footerIcpText         String?          @map("footer_icp_text")
   footerIcpLink         String?          @map("footer_icp_link")
   footerNote            String?          @map("footer_note")
-  turnstileSiteKey      String?          @map("turnstile_site_key")
-  securitySettingsJson  Json?            @map("security_settings_json")
-  socialLinks           SiteSocialLink[]
+  turnstileSiteKey              String?          @map("turnstile_site_key")
+  securitySettingsJson          Json?            @map("security_settings_json")
+  notificationSettingsJson      Json?            @map("notification_settings_json")
+  notificationSecretsCiphertext String?          @map("notification_secrets_ciphertext")
+  socialLinks                   SiteSocialLink[]
   navItems              SiteNavItem[]
   createdAt             DateTime         @default(now()) @map("created_at")
   updatedAt             DateTime         @updatedAt @map("updated_at")
@@ -154,6 +162,25 @@ model SiteNavItem {
 
   @@index([siteSettingsId, sortOrder])
   @@map("site_nav_items")
+}
+
+model NotificationDelivery {
+  id               String                     @id @default(cuid())
+  eventName        String                     @map("event_name")
+  status           NotificationDeliveryStatus @default(queued)
+  recipientsJson   Json                       @map("recipients_json")
+  subject          String
+  bodyText         String                     @db.LongText @map("body_text")
+  payloadJson      Json                       @map("payload_json")
+  attempts         Int                        @default(0)
+  lastErrorMessage String?                    @db.Text @map("last_error_message")
+  queuedAt         DateTime                   @default(now()) @map("queued_at")
+  sentAt           DateTime?                  @map("sent_at")
+  createdAt        DateTime                   @default(now()) @map("created_at")
+  updatedAt        DateTime                   @updatedAt @map("updated_at")
+
+  @@index([eventName, status, queuedAt])
+  @@map("notification_deliveries")
 }
 
 model ManagedPage {

@@ -20,6 +20,7 @@ import {
   findMediaFolderByName,
   findMediaFolderRecordById,
   findMediaTagRecordsByIds,
+  type MediaAssetRecord,
   moveMediaAssetRecords,
   readMaxMediaFolderSortOrder,
   readMediaAssetFolderIdRecords,
@@ -295,7 +296,7 @@ function toMediaTag(record: Awaited<ReturnType<typeof readMediaTagRecords>>[numb
   };
 }
 
-function toMediaAsset(record: Awaited<ReturnType<typeof readMediaAssetRecords>>[number]): MediaAsset {
+function toMediaAsset(record: MediaAssetRecord): MediaAsset {
   const fileUrl = `/api/admin/media/files/${record.id}`;
   const sortedTagIds = [...record.tags]
     .sort((left, right) => left.tag.sortOrder - right.tag.sortOrder)

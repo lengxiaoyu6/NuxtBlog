@@ -15,6 +15,7 @@ import {
   updatePostCommentStatusRecord,
 } from '../repositories/post-comment.repository';
 import { resolveAuthorRegionByIp } from './ip-region.service';
+import { emitPostCommentCreated, emitPostCommentReviewed } from './notification-event.service';
 import { formatDateTimeInShanghai } from './post.logic.mjs';
 import { createPostCommentService } from './post-comment.logic.mjs';
 
@@ -40,6 +41,7 @@ const postCommentService = createPostCommentService({
   findCommentById: findPostCommentRecordById,
   createCommentRecord: createPostCommentRecord,
   resolveAuthorRegionByIp,
+  emitPostCommentCreated,
   createError,
   now: () => new Date(),
 });
@@ -57,9 +59,32 @@ export async function createPostComment(
 }
 
 type AdminPostCommentRecord = Awaited<ReturnType<typeof readAdminPostCommentRecords>>[number];
+type PostCommentRecord = NonNullable<Awaited<ReturnType<typeof findPostCommentRecordById>>>;
 
 const ADMIN_POST_COMMENT_STATUSES: PostCommentStatus[] = ['pending', 'approved', 'rejected', 'spam'];
 const REVIEWABLE_POST_COMMENT_STATUSES: PostCommentStatusUpdateInput['status'][] = ['approved', 'rejected', 'spam'];
+
+interface AdminPostCommentServiceDependencies {
+  readAdminPostCommentRecords?: typeof readAdminPostCommentRecords;
+  findPostCommentById?: typeof findPostCommentRecordById;
+  updatePostCommentStatusRecord?: typeof updatePostCommentStatusRecord;
+  createError?: typeof createError;
+  emitPostCommentReviewed?: (payload: {
+    id: string;
+    postId: number;
+    postTitle: string;
+    parentId: string | null;
+    parentAuthorEmail: string;
+    authorName: string;
+    authorEmail: string;
+    authorRegion: string;
+    content: string;
+    previousStatus: PostCommentStatus;
+    status: PostCommentStatus;
+    submittedAt: string;
+    reviewedAt: string | null;
+  }) => Promise<void> | void;
+}
 
 function normalizeText(value: unknown) {
   return typeof value === 'string' ? value.trim() : '';
@@ -125,30 +150,73 @@ function createAdminPostComment(record: AdminPostCommentRecord): AdminComment {
   };
 }
 
-export async function readAdminPostComments(query: AdminPostCommentListQuery = {}) {
-  const normalizedQuery = normalizeAdminPostCommentListQuery(query);
-  const records = await readAdminPostCommentRecords({
-    status: normalizedQuery.status || undefined,
-    postId: normalizedQuery.postId ?? undefined,
-    keyword: normalizedQuery.keyword || undefined,
-  });
+function createPostCommentReviewedPayload(record: AdminPostCommentRecord, previousRecord: PostCommentRecord) {
+  return {
+    id: record.id,
+    postId: record.post.id,
+    postTitle: record.post.title,
+    parentId: record.parentId,
+    parentAuthorEmail: record.parent?.authorEmail ?? '',
+    authorName: record.authorName,
+    authorEmail: record.authorEmail,
+    authorRegion: record.authorRegion,
+    content: record.content,
+    previousStatus: previousRecord.status,
+    status: record.status,
+    submittedAt: record.submittedAt.toISOString(),
+    reviewedAt: record.reviewedAt?.toISOString() ?? null,
+  };
+}
 
-  return records.map(createAdminPostComment);
+export function createAdminPostCommentService(dependencies: AdminPostCommentServiceDependencies = {}) {
+  const {
+    readAdminPostCommentRecords: readAdminPostCommentRecordsImpl = readAdminPostCommentRecords,
+    findPostCommentById: findPostCommentByIdImpl = findPostCommentRecordById,
+    updatePostCommentStatusRecord: updatePostCommentStatusRecordImpl = updatePostCommentStatusRecord,
+    createError: createErrorImpl = createError,
+    emitPostCommentReviewed = async () => {},
+  } = dependencies;
+
+  return {
+    async readAdminPostComments(query: AdminPostCommentListQuery = {}) {
+      const normalizedQuery = normalizeAdminPostCommentListQuery(query);
+      const records = await readAdminPostCommentRecordsImpl({
+        status: normalizedQuery.status || undefined,
+        postId: normalizedQuery.postId ?? undefined,
+        keyword: normalizedQuery.keyword || undefined,
+      });
+
+      return records.map(createAdminPostComment);
+    },
+    async updatePostCommentStatus(id: string, status: PostCommentStatusUpdateInput['status']) {
+      const normalizedId = ensurePostCommentId(id);
+      const existingRecord = await findPostCommentByIdImpl(normalizedId);
+
+      if (!existingRecord) {
+        throw createErrorImpl({
+          statusCode: 404,
+          statusMessage: '评论不存在',
+        });
+      }
+
+      const nextStatus = validateReviewablePostCommentStatus(status);
+      const updatedRecord = await updatePostCommentStatusRecordImpl(normalizedId, nextStatus);
+
+      await emitPostCommentReviewed(createPostCommentReviewedPayload(updatedRecord, existingRecord));
+
+      return createAdminPostComment(updatedRecord);
+    },
+  };
+}
+
+const adminPostCommentService = createAdminPostCommentService({
+  emitPostCommentReviewed,
+});
+
+export async function readAdminPostComments(query: AdminPostCommentListQuery = {}) {
+  return await adminPostCommentService.readAdminPostComments(query);
 }
 
 export async function updatePostCommentStatus(id: string, status: PostCommentStatusUpdateInput['status']) {
-  const normalizedId = ensurePostCommentId(id);
-  const existingRecord = await findPostCommentRecordById(normalizedId);
-
-  if (!existingRecord) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: '评论不存在',
-    });
-  }
-
-  const nextStatus = validateReviewablePostCommentStatus(status);
-  const updatedRecord = await updatePostCommentStatusRecord(normalizedId, nextStatus);
-
-  return createAdminPostComment(updatedRecord);
+  return await adminPostCommentService.updatePostCommentStatus(id, status);
 }

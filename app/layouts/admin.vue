@@ -49,12 +49,12 @@
             @click="isSidebarOpen = false"
             class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group"
             :class="[
-              route.path === item.path
+              isCurrentPath(item.path)
                 ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-600'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
             ]"
           >
-            <component :is="item.icon" :size="20" :class="route.path === item.path ? 'text-brand-600' : 'group-hover:text-slate-900 dark:group-hover:text-white'" />
+            <component :is="item.icon" :size="20" :class="isCurrentPath(item.path) ? 'text-brand-600' : 'group-hover:text-slate-900 dark:group-hover:text-white'" />
             <span class="text-sm font-bold">{{ item.label }}</span>
           </NuxtLink>
         </section>
@@ -115,6 +115,7 @@ import {
   Link2,
   MessageCircleMore,
   Settings, 
+  Package,
   LogOut,
   Bell,
   Menu,
@@ -154,12 +155,27 @@ const navGroups = [
     label: '系统配置',
     items: [
       { label: '系统设置', path: '/admin/settings', icon: Settings },
+      { label: '模块插件', path: '/admin/modules', icon: Package },
     ],
   },
 ];
 
+function isCurrentPath(path: string) {
+  if (route.path === path) {
+    return true;
+  }
+
+  if (path === '/admin/modules' && route.path.startsWith('/admin/modules/')) {
+    return true;
+  }
+
+  return false;
+}
+
 const currentNavLabel = computed(() => {
-  return navGroups.flatMap((group) => group.items).find((item) => item.path === route.path)?.label || '管理后台';
+  return navGroups
+    .flatMap((group) => group.items)
+    .find((item) => isCurrentPath(item.path))?.label || '管理后台';
 });
 
 const siteTitle = computed(() => settings.value.site.name.trim() || DEFAULT_SITE_SETTINGS.site.name);

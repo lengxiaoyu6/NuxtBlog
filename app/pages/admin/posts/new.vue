@@ -274,12 +274,11 @@
 <script setup lang="ts">
 import type { AdminPostDetail } from '~/types/post';
 import type { AdminPostUpsertInput, BlogPostStatus } from '~~/shared/types/post';
-import type { Editor } from '@tiptap/vue-3';
+import { type Editor, isNodeSelection } from '@tiptap/core';
 import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import type { EditorCustomHandlers } from '@nuxt/ui';
 import type { EditorToolbarItem } from '@nuxt/ui';
-import { NodeSelection } from '@tiptap/pm/state';
 import {
   ArrowLeft,
   Send,
@@ -511,10 +510,16 @@ const editorUi = {
   base: 'min-h-full [&_p]:!my-2.5 [&_:is(ul,ol,blockquote)]:!my-3 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl'
 };
 
+function readSelectedImageNode(selection: unknown) {
+  if (!isNodeSelection(selection) || selection.node.type.name !== 'image') {
+    return null;
+  }
+
+  return selection;
+}
+
 const shouldShowImageResizeToolbar = ({ view, state }: { view: { hasFocus: () => boolean }; state: { selection: unknown } }) => {
-  return view.hasFocus()
-    && state.selection instanceof NodeSelection
-    && state.selection.node.type.name === 'image';
+  return view.hasFocus() && Boolean(readSelectedImageNode(state.selection));
 };
 
 
@@ -839,8 +844,8 @@ function escapeMarkdownImageText(value: string) {
 }
 
 function readSelectedImageState(editor: Editor) {
-  const { selection } = editor.state;
-  if (!(selection instanceof NodeSelection) || selection.node.type.name !== 'image') {
+  const selection = readSelectedImageNode(editor.state.selection);
+  if (!selection) {
     return null;
   }
 

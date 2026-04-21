@@ -9,6 +9,12 @@ import {
   updateGuestbookEntryStatusRecord,
 } from '../repositories/guestbook.repository';
 import { UNKNOWN_IP_REGION, resolveAuthorRegionByIp } from './ip-region.service';
+import {
+  type GuestbookCreatedEventPayload,
+  type GuestbookReviewedEventPayload,
+  emitGuestbookCreated,
+  emitGuestbookReviewed,
+} from './notification-event.service';
 import { readGuestbookPageSettings } from './page-settings.service';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,6 +29,8 @@ interface GuestbookServiceDependencies {
   createGuestbookEntryRecord?: typeof createGuestbookEntryRecord;
   updateGuestbookEntryStatusRecord?: typeof updateGuestbookEntryStatusRecord;
   resolveAuthorRegionByIp?: (ip: string | null | undefined) => Promise<string>;
+  emitGuestbookCreated?: (payload: GuestbookCreatedEventPayload) => Promise<void> | void;
+  emitGuestbookReviewed?: (payload: GuestbookReviewedEventPayload) => Promise<void> | void;
   createError?: typeof createError;
   now?: () => Date;
 }
@@ -110,6 +118,8 @@ export function createGuestbookService(dependencies: GuestbookServiceDependencie
     createGuestbookEntryRecord: createGuestbookEntryRecordImpl = createGuestbookEntryRecord,
     updateGuestbookEntryStatusRecord: updateGuestbookEntryStatusRecordImpl = updateGuestbookEntryStatusRecord,
     resolveAuthorRegionByIp: resolveAuthorRegionByIpImpl = resolveAuthorRegionByIp,
+    emitGuestbookCreated = async () => {},
+    emitGuestbookReviewed = async () => {},
     createError: createErrorImpl = createError,
     now = () => new Date(),
   } = dependencies;
@@ -176,7 +186,7 @@ export function createGuestbookService(dependencies: GuestbookServiceDependencie
         authorRegion = UNKNOWN_IP_REGION;
       }
 
-      await createGuestbookEntryRecordImpl({
+      const createdRecord = await createGuestbookEntryRecordImpl({
         parentId: parentId || null,
         authorName: input.authorName.trim(),
         authorEmail: input.authorEmail.trim(),
@@ -185,6 +195,19 @@ export function createGuestbookService(dependencies: GuestbookServiceDependencie
         content: input.content.trim(),
         submittedAt: now(),
       });
+
+      if (createdRecord) {
+        await emitGuestbookCreated({
+          id: createdRecord.id,
+          parentId: createdRecord.parentId,
+          authorName: createdRecord.authorName,
+          authorEmail: createdRecord.authorEmail,
+          authorRegion: createdRecord.authorRegion,
+          content: createdRecord.content,
+          status: createdRecord.status,
+          submittedAt: createdRecord.submittedAt.toISOString(),
+        });
+      }
 
       return {
         ok: true,
@@ -215,6 +238,20 @@ export function createGuestbookService(dependencies: GuestbookServiceDependencie
 
       const nextStatus = validateGuestbookStatus(status, createErrorImpl);
       const updatedRecord = await updateGuestbookEntryStatusRecordImpl(id, nextStatus);
+
+      await emitGuestbookReviewed({
+        id: updatedRecord.id,
+        parentId: updatedRecord.parentId,
+        authorName: updatedRecord.authorName,
+        authorEmail: updatedRecord.authorEmail,
+        authorRegion: updatedRecord.authorRegion,
+        content: updatedRecord.content,
+        previousStatus: existingRecord.status,
+        status: updatedRecord.status,
+        submittedAt: updatedRecord.submittedAt.toISOString(),
+        reviewedAt: updatedRecord.reviewedAt?.toISOString() ?? null,
+      });
+
       const parentRecord = updatedRecord.parentId ? await findGuestbookEntryByIdImpl(updatedRecord.parentId) : null;
 
       return createAdminComment(updatedRecord, parentRecord ?? undefined);
@@ -222,7 +259,10 @@ export function createGuestbookService(dependencies: GuestbookServiceDependencie
   };
 }
 
-const guestbookService = createGuestbookService();
+const guestbookService = createGuestbookService({
+  emitGuestbookCreated,
+  emitGuestbookReviewed,
+});
 
 export async function readPublicGuestbookEntries() {
   return await guestbookService.readPublicGuestbookEntries();

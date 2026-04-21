@@ -13,13 +13,14 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
   devtools: { enabled: true },
-  modules: ['@nuxt/ui', 'nuxt-auth-utils'],
+  modules: ['@nuxt/ui', 'nuxt-auth-utils', './modules/notification-center/module'],
   runtimeConfig: {
     session: {
       password: resolveSessionPasswordRuntimeValue(),
     },
     databaseUrl: process.env.DATABASE_URL || 'mysql://root:password@127.0.0.1:3306/nuxt-blog',
     mediaStorageDir: process.env.MEDIA_STORAGE_DIR || 'storage/media',
+    encryptionSecretKey: process.env.ENCRYPTION_SECRET_KEY || process.env.NOTIFICATION_SECRET_KEY || '',
     securityHashSalt: process.env.SECURITY_HASH_SALT || '',
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
     ipRegionProvider: process.env.IP_REGION_PROVIDER || 'ip2region',

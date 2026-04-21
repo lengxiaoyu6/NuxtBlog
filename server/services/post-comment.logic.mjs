@@ -127,6 +127,7 @@ export function createPostCommentService(dependencies) {
     findCommentById,
     createCommentRecord,
     resolveAuthorRegionByIp = async () => UNKNOWN_AUTHOR_REGION,
+    emitPostCommentCreated = async () => {},
     createError,
     now = () => new Date(),
   } = dependencies;
@@ -142,7 +143,7 @@ export function createPostCommentService(dependencies) {
       });
     }
 
-    return postRecord.id;
+    return postRecord;
   }
 
   async function assertParentCommentAvailable(postId, parentId) {
@@ -158,18 +159,18 @@ export function createPostCommentService(dependencies) {
 
   return {
     async readPublicPostComments(postId) {
-      const normalizedPostId = await assertPublishedPostExists(postId);
-      const records = await readCommentsByPostId(normalizedPostId);
+      const postRecord = await assertPublishedPostExists(postId);
+      const records = await readCommentsByPostId(postRecord.id);
       return buildApprovedCommentTree(records);
     },
     async createPostComment(postId, input, options = {}) {
-      const normalizedPostId = await assertPublishedPostExists(postId);
+      const postRecord = await assertPublishedPostExists(postId);
       const normalizedInput = normalizePostCommentSubmitInput(input);
 
       validatePostCommentInput(normalizedInput, createError);
 
       if (normalizedInput.parentId) {
-        await assertParentCommentAvailable(normalizedPostId, normalizedInput.parentId);
+        await assertParentCommentAvailable(postRecord.id, normalizedInput.parentId);
       }
 
       let authorRegion = UNKNOWN_AUTHOR_REGION;
@@ -180,8 +181,8 @@ export function createPostCommentService(dependencies) {
         authorRegion = UNKNOWN_AUTHOR_REGION;
       }
 
-      await createCommentRecord({
-        postId: normalizedPostId,
+      const createdRecord = await createCommentRecord({
+        postId: postRecord.id,
         parentId: normalizedInput.parentId || null,
         authorName: normalizedInput.authorName,
         authorEmail: normalizedInput.authorEmail,
@@ -190,6 +191,21 @@ export function createPostCommentService(dependencies) {
         content: normalizedInput.content,
         submittedAt: now(),
       });
+
+      if (createdRecord) {
+        await emitPostCommentCreated({
+          id: createdRecord.id,
+          postId: createdRecord.postId,
+          postTitle: postRecord.title,
+          parentId: createdRecord.parentId,
+          authorName: createdRecord.authorName,
+          authorEmail: createdRecord.authorEmail,
+          authorRegion: createdRecord.authorRegion,
+          content: createdRecord.content,
+          status: createdRecord.status,
+          submittedAt: createdRecord.submittedAt.toISOString(),
+        });
+      }
 
       return {
         ok: true,

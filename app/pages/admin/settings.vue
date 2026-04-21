@@ -797,6 +797,7 @@
       </section>
     </div>
 
+
     <div v-else-if="activeTab === 'footer'" class="space-y-8">
       <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
@@ -1071,7 +1072,7 @@ const bottomStatusText = computed(() => {
   }
 
   if (saveState.value === 'dirty') {
-    return '存在尚未保存的修改，保存后会同步首页、导航和页脚展示内容。';
+    return '存在尚未保存的修改，保存后会同步站点配置。';
   }
 
   if (saveState.value === 'error') {
@@ -1231,7 +1232,12 @@ function moveSocialLink(id: string, direction: 'up' | 'down') {
   }
 
   const nextLinks = [...form.value.socialLinks];
-  const [currentItem] = nextLinks.splice(currentIndex, 1);
+  const currentItem = nextLinks[currentIndex];
+  if (!currentItem) {
+    return;
+  }
+
+  nextLinks.splice(currentIndex, 1);
   nextLinks.splice(targetIndex, 0, currentItem);
   form.value.socialLinks = nextLinks;
   normalizeSocialLinks();
@@ -1265,7 +1271,12 @@ function moveNavItem(id: string, direction: 'up' | 'down') {
   }
 
   const nextItems = [...form.value.navItems];
-  const [currentItem] = nextItems.splice(currentIndex, 1);
+  const currentItem = nextItems[currentIndex];
+  if (!currentItem) {
+    return;
+  }
+
+  nextItems.splice(currentIndex, 1);
   nextItems.splice(targetIndex, 0, currentItem);
   form.value.navItems = nextItems;
   normalizeNavItems();
