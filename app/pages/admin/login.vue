@@ -92,7 +92,7 @@ const form = reactive({
 });
 
 const route = useRoute();
-const { fetch: fetchUserSession } = useUserSession();
+const { fetch: fetchUserSession, session: userSession } = useUserSession();
 const loading = ref(false);
 const loginError = ref('');
 const turnstileToken = ref('');
@@ -107,6 +107,14 @@ const redirectPath = computed(() => {
 function resetCaptcha() {
   turnstileToken.value = '';
   captchaResetNonce.value += 1;
+}
+
+function hydrateUserSession(user: AdminSessionUser) {
+  userSession.value = {
+    ...(userSession.value || {}),
+    user,
+    loggedInAt: Date.now(),
+  } as NonNullable<typeof userSession.value>;
 }
 
 async function handleLogin() {
@@ -134,6 +142,7 @@ async function handleLogin() {
     });
 
     await fetchUserSession();
+    hydrateUserSession(loginResult.user);
 
     if (loginResult.user.mustChangePassword) {
       await navigateTo('/admin/password-setup');
