@@ -145,7 +145,7 @@ async function handleLogin() {
     hydrateUserSession(loginResult.user);
 
     if (loginResult.user.mustChangePassword) {
-      await navigateTo('/admin/password-setup');
+      await navigateTo('/admin/password-setup', { external: true });
       return;
     }
 

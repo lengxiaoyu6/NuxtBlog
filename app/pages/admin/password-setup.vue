@@ -1,9 +1,8 @@
 <template>
   <AdminAuthShell
     title="首次登录需要修改密码"
-    eyebrow="安全初始化"
     icon="i-lucide-shield-check"
-    description="当前管理员账号仍在使用初始密码 admin123。完成更新后即可进入后台首页。"
+    login-only
   >
     <form class="space-y-5" @submit.prevent="handleSubmit">
       <UFormField label="新密码" help="密码长度至少 8 位，且不能继续使用初始密码。">
