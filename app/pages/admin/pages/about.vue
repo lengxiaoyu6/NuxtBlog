@@ -1,9 +1,10 @@
 <template>
   <div class="space-y-8 pb-20">
-    <section class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <UCard :ui="{ root: 'rounded-[2rem] border-slate-200 dark:border-slate-800', body: 'p-5 sm:p-6' }">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div class="space-y-3">
           <div class="flex flex-wrap items-center gap-3">
+            <UIcon name="i-lucide-user-round" class="size-7 text-brand-600 dark:text-brand-300" />
             <h1 class="font-serif text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               关于我
             </h1>
@@ -32,28 +33,28 @@
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:w-[22rem]">
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+          <UButton
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-rotate-ccw"
+            class="justify-center"
             :disabled="isActionDisabled"
             @click="resetForm"
           >
-            <RotateCcw :size="16" />
             重置本页
-          </button>
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
+          </UButton>
+          <UButton
+            :loading="saveState === 'saving'"
+            :icon="saveState === 'saving' ? undefined : 'i-lucide-save'"
+            class="justify-center"
             :disabled="isActionDisabled"
             @click="savePageSettings"
           >
-            <LoaderCircle v-if="saveState === 'saving'" :size="16" class="animate-spin" />
-            <Save v-else :size="16" />
             {{ saveState === 'saving' ? '保存中...' : '保存修改' }}
-          </button>
+          </UButton>
         </div>
       </div>
-    </section>
+    </UCard>
 
     <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
@@ -403,7 +404,7 @@ import {
   SearchCheck,
   ShieldCheck,
   Trash2,
-} from 'lucide-vue-next';
+} from '~/utils/admin-lucide-icons';
 import { clonePageSettings } from '~/constants/page-settings';
 import { useAdminPageEditor } from '~/composables/useAdminPageEditor';
 import { usePageSettings } from '~/composables/usePageSettings';

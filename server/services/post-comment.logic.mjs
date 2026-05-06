@@ -124,16 +124,16 @@ function ensurePostIdentifier(postIdentifier, createError) {
 }
 
 export function createPostCommentService(dependencies) {
-    const {
-        resolvePublishedPost,
-        readCommentsByPostId,
-        findCommentById,
-        createCommentRecord,
-        resolveAuthorRegionByIp = async () => UNKNOWN_AUTHOR_REGION,
-        emitPostCommentCreated = async () => {},
-        createError,
-        now = () => new Date(),
-    } = dependencies;
+  const {
+    resolvePublishedPost,
+    readCommentsByPostId,
+    findCommentById,
+    createCommentRecord,
+    resolveAuthorRegionByIp = async () => UNKNOWN_AUTHOR_REGION,
+    emitPostCommentCreated = async () => {},
+    createError,
+    now = () => new Date(),
+  } = dependencies;
 
     async function assertPublishedPostExists(postIdentifier) {
         const normalizedPostIdentifier = ensurePostIdentifier(postIdentifier, createError);
@@ -149,8 +149,8 @@ export function createPostCommentService(dependencies) {
         return postRecord;
     }
 
-    async function assertParentCommentAvailable(postId, parentId) {
-        const parentRecord = await findCommentById(parentId);
+    return postRecord;
+  }
 
         if (!parentRecord || parentRecord.postId !== postId) {
             throw createError({
@@ -160,59 +160,60 @@ export function createPostCommentService(dependencies) {
         }
     }
 
-    return {
-        async readPublicPostComments(postId) {
-            const postRecord = await assertPublishedPostExists(postId);
-            const records = await readCommentsByPostId(postRecord.id);
-            return buildApprovedCommentTree(records);
-        },
-        async createPostComment(postId, input, options = {}) {
-            const postRecord = await assertPublishedPostExists(postId);
-            const normalizedInput = normalizePostCommentSubmitInput(input);
+  return {
+    async readPublicPostComments(postId) {
+      const postRecord = await assertPublishedPostExists(postId);
+      const records = await readCommentsByPostId(postRecord.id);
+      return buildApprovedCommentTree(records);
+    },
+    async createPostComment(postId, input, options = {}) {
+      const postRecord = await assertPublishedPostExists(postId);
+      const normalizedInput = normalizePostCommentSubmitInput(input);
 
             validatePostCommentInput(normalizedInput, createError);
 
-            if (normalizedInput.parentId) {
-                await assertParentCommentAvailable(postRecord.id, normalizedInput.parentId);
-            }
+      if (normalizedInput.parentId) {
+        await assertParentCommentAvailable(postRecord.id, normalizedInput.parentId);
+      }
 
-            let authorRegion = UNKNOWN_AUTHOR_REGION;
-            try {
-                authorRegion = await resolveAuthorRegionByIp(options.clientIp);
-            } catch {
-                authorRegion = UNKNOWN_AUTHOR_REGION;
-            }
+      let authorRegion = UNKNOWN_AUTHOR_REGION;
+      try {
+        authorRegion = await resolveAuthorRegionByIp(options.clientIp);
+      }
+      catch {
+        authorRegion = UNKNOWN_AUTHOR_REGION;
+      }
 
-            const createdRecord = await createCommentRecord({
-                postId: postRecord.id,
-                parentId: normalizedInput.parentId || null,
-                authorName: normalizedInput.authorName,
-                authorEmail: normalizedInput.authorEmail,
-                authorAvatarUrl: createCommentAvatar(normalizedInput.authorName),
-                authorRegion,
-                content: normalizedInput.content,
-                submittedAt: now(),
-            });
+      const createdRecord = await createCommentRecord({
+        postId: postRecord.id,
+        parentId: normalizedInput.parentId || null,
+        authorName: normalizedInput.authorName,
+        authorEmail: normalizedInput.authorEmail,
+        authorAvatarUrl: createCommentAvatar(normalizedInput.authorName),
+        authorRegion,
+        content: normalizedInput.content,
+        submittedAt: now(),
+      });
 
-            if (createdRecord) {
-                await emitPostCommentCreated({
-                    id: createdRecord.id,
-                    postId: createdRecord.postId,
-                    postTitle: postRecord.title,
-                    parentId: createdRecord.parentId,
-                    authorName: createdRecord.authorName,
-                    authorEmail: createdRecord.authorEmail,
-                    authorRegion: createdRecord.authorRegion,
-                    content: createdRecord.content,
-                    status: createdRecord.status,
-                    submittedAt: createdRecord.submittedAt.toISOString(),
-                });
-            }
+      if (createdRecord) {
+        await emitPostCommentCreated({
+          id: createdRecord.id,
+          postId: createdRecord.postId,
+          postTitle: postRecord.title,
+          parentId: createdRecord.parentId,
+          authorName: createdRecord.authorName,
+          authorEmail: createdRecord.authorEmail,
+          authorRegion: createdRecord.authorRegion,
+          content: createdRecord.content,
+          status: createdRecord.status,
+          submittedAt: createdRecord.submittedAt.toISOString(),
+        });
+      }
 
-            return {
-                ok: true,
-                message: POST_COMMENT_SUBMIT_SUCCESS_MESSAGE,
-            };
-        },
-    };
+      return {
+        ok: true,
+        message: POST_COMMENT_SUBMIT_SUCCESS_MESSAGE,
+      };
+    },
+  };
 }

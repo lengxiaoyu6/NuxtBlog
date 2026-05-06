@@ -1,9 +1,10 @@
 <template>
   <div class="space-y-8 pb-20">
-    <section class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <UCard :ui="{ root: 'rounded-[2rem] border-slate-200 dark:border-slate-800', body: 'p-5 sm:p-6' }">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div class="space-y-3">
           <div class="flex flex-wrap items-center gap-3">
+            <UIcon name="i-lucide-folder-kanban" class="size-7 text-brand-600 dark:text-brand-300" />
             <h1 class="font-serif text-3xl font-black tracking-tight text-slate-900 dark:text-white">项目展示</h1>
             <span class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold" :class="saveBadgeClass">
               <component :is="saveBadgeIcon" :size="14" :class="saveState === 'saving' ? 'animate-spin' : ''" />
@@ -27,18 +28,15 @@
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:w-[22rem]">
-          <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800" :disabled="isActionDisabled" @click="resetForm">
-            <RotateCcw :size="16" />
+          <UButton color="neutral" variant="soft" icon="i-lucide-rotate-ccw" class="justify-center" :disabled="isActionDisabled" @click="handleResetForm">
             重置本页
-          </button>
-          <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-300" :disabled="isActionDisabled" @click="savePageSettings">
-            <LoaderCircle v-if="saveState === 'saving'" :size="16" class="animate-spin" />
-            <Save v-else :size="16" />
+          </UButton>
+          <UButton :loading="saveState === 'saving'" :icon="saveState === 'saving' ? undefined : 'i-lucide-save'" class="justify-center" :disabled="isActionDisabled" @click="savePageSettings">
             {{ saveState === 'saving' ? '保存中...' : '保存修改' }}
-          </button>
+          </UButton>
         </div>
       </div>
-    </section>
+    </UCard>
 
     <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-2 dark:border-slate-800 dark:bg-slate-900/40">
       <button
@@ -131,7 +129,7 @@
     </div>
 
     <div v-else class="space-y-8">
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
         <div class="mb-6 flex items-center justify-between gap-4">
           <div class="flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
@@ -152,33 +150,118 @@
             <label class="text-sm font-bold text-slate-900 dark:text-white">区块标题</label>
             <input v-model="form.projectsSection.title" type="text" maxlength="40" class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
           </div>
-          <article
-            v-for="item in form.projects"
-            :key="item.id"
-            class="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40"
-          >
-            <div class="mb-4 flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <input v-model="item.enabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
-                <p class="text-sm font-bold text-slate-900 dark:text-white">{{ item.title || '未命名项目' }}</p>
-              </div>
-              <button type="button" class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-rose-500 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/30" @click="removeProject(item.id)">
-                <Trash2 :size="14" />
-                删除
-              </button>
-            </div>
-            <div class="grid gap-4 lg:grid-cols-2">
-              <input v-model="item.title" type="text" maxlength="50" placeholder="项目标题" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
-              <input v-model="item.category" type="text" maxlength="30" placeholder="项目分类" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
-              <input v-model="item.image" type="url" placeholder="封面图片链接" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
-              <input v-model="item.githubUrl" type="url" placeholder="GitHub 链接" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
-              <input v-model="item.demoUrl" type="url" placeholder="演示链接" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 lg:col-span-2">
-              <textarea v-model="item.description" rows="4" maxlength="180" placeholder="项目描述" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 lg:col-span-2" />
-              <input v-model="projectTags[item.id]" type="text" placeholder="标签，使用逗号分隔" class="h-10 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 lg:col-span-2" @change="syncProjectTags(item.id)">
-            </div>
-          </article>
+          <div class="grid gap-6 xl:grid-cols-2">
+            <AdminProjectEditorCard
+              v-for="item in form.projects"
+              :key="item.id"
+              :project="item"
+              :tags-value="projectTags[item.id] ?? ''"
+              @edit="openProjectEditor(item.id)"
+              @remove="removeProject(item.id)"
+            />
+          </div>
         </div>
       </section>
+
+      <UModal v-model:open="isProjectEditorOpen" :ui="{ content: 'max-w-4xl' }">
+        <template #content>
+          <div
+            v-if="editingProject"
+            class="admin-theme-card overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div class="flex items-center justify-between gap-4 border-b border-slate-200/70 px-6 py-5 dark:border-slate-800">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-brand-500">项目编辑</p>
+                <h3 class="mt-2 text-xl font-black text-slate-900 dark:text-white">{{ editingProject.title.trim() || '未命名项目' }}</h3>
+              </div>
+              <UButton color="neutral" variant="ghost" icon="i-lucide-x" class="-my-1" @click="closeProjectEditor" />
+            </div>
+
+            <div class="space-y-6 px-6 py-6">
+              <div class="grid gap-4 sm:grid-cols-2">
+                <div class="space-y-2 sm:col-span-2">
+                  <label class="text-sm font-bold text-slate-900 dark:text-white">项目标题</label>
+                  <input
+                    v-model="editingProject.title"
+                    type="text"
+                    maxlength="50"
+                    placeholder="项目标题"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-slate-900 dark:text-white">项目分类</label>
+                  <input
+                    v-model="editingProject.category"
+                    type="text"
+                    maxlength="30"
+                    placeholder="项目分类"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                </div>
+                <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-900 dark:border-slate-800 dark:bg-slate-950/60 dark:text-white">
+                  <input v-model="editingProject.enabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                  在前台展示此项目
+                </label>
+                <div class="space-y-2 sm:col-span-2">
+                  <label class="text-sm font-bold text-slate-900 dark:text-white">项目描述</label>
+                  <textarea
+                    v-model="editingProject.description"
+                    rows="4"
+                    maxlength="180"
+                    placeholder="项目描述"
+                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                </div>
+                <div class="space-y-2 sm:col-span-2">
+                  <label class="text-sm font-bold text-slate-900 dark:text-white">标签</label>
+                  <input
+                    :value="projectTags[editingProject.id] ?? ''"
+                    type="text"
+                    placeholder="标签，使用逗号分隔"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                    @input="projectTags[editingProject.id] = ($event.target as HTMLInputElement).value"
+                    @change="syncProjectTags(editingProject.id)"
+                  >
+                </div>
+                <div class="space-y-2 sm:col-span-2">
+                  <label class="text-sm font-bold text-slate-900 dark:text-white">封面图片链接</label>
+                  <input
+                    v-model="editingProject.image"
+                    type="url"
+                    placeholder="封面图片链接"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-slate-900 dark:text-white">GitHub 链接</label>
+                  <input
+                    v-model="editingProject.githubUrl"
+                    type="url"
+                    placeholder="GitHub 链接"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                </div>
+                <div class="space-y-2">
+                  <label class="text-sm font-bold text-slate-900 dark:text-white">演示链接</label>
+                  <input
+                    v-model="editingProject.demoUrl"
+                    type="url"
+                    placeholder="演示链接"
+                    class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                </div>
+              </div>
+
+              <div class="flex justify-end">
+                <UButton color="neutral" variant="soft" icon="i-lucide-check" @click="closeProjectEditor">
+                  完成编辑
+                </UButton>
+              </div>
+            </div>
+          </div>
+        </template>
+      </UModal>
     </div>
 
     <section class="flex flex-col gap-4 rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
@@ -187,7 +270,7 @@
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ bottomStatusText }}</p>
       </div>
       <div class="grid gap-3 sm:grid-cols-2">
-        <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800" :disabled="isActionDisabled" @click="resetForm">
+        <button type="button" class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800" :disabled="isActionDisabled" @click="handleResetForm">
           <RotateCcw :size="16" />
           重置本页
         </button>
@@ -202,7 +285,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
+import AdminProjectEditorCard from '~/components/admin/pages/AdminProjectEditorCard.vue';
 import {
   AlertCircle,
   Box,
@@ -214,8 +298,7 @@ import {
   Save,
   SearchCheck,
   ShieldCheck,
-  Trash2,
-} from 'lucide-vue-next';
+} from '~/utils/admin-lucide-icons';
 import { clonePageSettings } from '~/constants/page-settings';
 import { useAdminPageEditor } from '~/composables/useAdminPageEditor';
 import { useAppToast } from '~/composables/useAppToast';
@@ -228,6 +311,8 @@ definePageMeta({ layout: 'admin' });
 const { addToast } = useAppToast();
 const { pageSettings, fetchPageSettings } = usePageSettings();
 const activeTab = ref<'settings' | 'projects'>('settings');
+const isProjectEditorOpen = ref(false);
+const editingProjectId = ref<string | null>(null);
 
 await fetchPageSettings({ admin: true });
 
@@ -289,6 +374,48 @@ const projectTags = reactive<Record<string, string>>(
   Object.fromEntries(form.value.projects.map((item) => [item.id, item.tags.join(', ')]))
 );
 
+const editingProject = computed(() => {
+  if (!editingProjectId.value) {
+    return null;
+  }
+
+  return form.value.projects.find((item) => item.id === editingProjectId.value) ?? null;
+});
+
+function openProjectEditor(id: string) {
+  editingProjectId.value = id;
+  isProjectEditorOpen.value = true;
+}
+
+function closeProjectEditor() {
+  isProjectEditorOpen.value = false;
+  editingProjectId.value = null;
+}
+
+function syncProjectTagState() {
+  for (const key of Object.keys(projectTags)) {
+    if (!form.value.projects.some((item) => item.id === key)) {
+      delete projectTags[key];
+    }
+  }
+
+  for (const item of form.value.projects) {
+    projectTags[item.id] = item.tags.join(', ');
+  }
+}
+
+watch(isProjectEditorOpen, (open) => {
+  if (!open) {
+    editingProjectId.value = null;
+  }
+});
+
+function handleResetForm() {
+  closeProjectEditor();
+  resetForm();
+  syncProjectTagState();
+}
+
 function addProject() {
   const id = `project-${Date.now()}`;
   form.value.projects.push({
@@ -303,11 +430,16 @@ function addProject() {
     enabled: true,
   });
   projectTags[id] = '';
+  openProjectEditor(id);
 }
 
 function removeProject(id: string) {
   form.value.projects = form.value.projects.filter((item) => item.id !== id);
   delete projectTags[id];
+
+  if (editingProjectId.value === id) {
+    closeProjectEditor();
+  }
 }
 
 function syncProjectTags(id: string) {
@@ -380,6 +512,7 @@ async function savePageSettings() {
     nextSettings.projects = cloneProjectsPageSettings(savedSettings);
     pageSettings.value = nextSettings;
     markSaved(nextSettings.projects, '项目展示设置已保存');
+    syncProjectTagState();
     addToast('项目展示设置已保存', 'success');
   }
   catch (error) {

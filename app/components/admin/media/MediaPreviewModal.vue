@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { X } from 'lucide-vue-next';
+import { X } from '~/utils/admin-lucide-icons';
 import type { MediaAsset } from '~/types/admin-media';
 
 defineProps<{

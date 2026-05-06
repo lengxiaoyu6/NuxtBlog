@@ -1,112 +1,264 @@
 <template>
-  <div class="space-y-6 sm:space-y-8 pb-16 sm:pb-20">
-    <!-- Header Area -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl py-6 -mx-4 px-4 sm:-mx-8 sm:px-8 border-b border-slate-200/50 dark:border-slate-800/50 mb-8 shadow-sm">
-      <div class="flex items-center gap-4">
-        <NuxtLink to="/admin/posts" class="p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all shadow-sm text-slate-500 hover:text-slate-900 dark:hover:text-white hover:scale-105 active:scale-95">
-          <ArrowLeft :size="20" />
-        </NuxtLink>
-        <div>
-          <h1 class="text-2xl font-black text-slate-900 dark:text-white font-serif tracking-tight">{{ isEditMode ? '编辑文章' : '撰写新文章' }}</h1>
-          <div class="flex items-center gap-2 mt-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse"></span>
-            <p class="text-slate-400 dark:text-slate-500 text-xs font-medium">{{ loadingEditingPost ? '正在加载文章详情...' : '草稿已于 14:23 自动保存' }}</p>
+  <div class="space-y-8 pb-20">
+    <section class="admin-theme-card rounded-[2.25rem] p-5 sm:p-6">
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+        <div class="flex items-start gap-4">
+          <UButton
+            to="/admin/posts"
+            color="neutral"
+            variant="soft"
+            square
+            class="mt-1 h-11 w-11 rounded-2xl"
+            aria-label="返回文章列表"
+          >
+            <UIcon name="i-lucide-arrow-left" class="size-5" />
+          </UButton>
+
+          <div class="space-y-3">
+            <div class="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700 dark:bg-brand-950/40 dark:text-brand-200">
+              <UIcon :name="isEditMode ? 'i-lucide-pencil-line' : 'i-lucide-notebook-pen'" class="size-4" />
+              {{ isEditMode ? '编辑文章' : '撰写文章' }}
+            </div>
+
+            <div class="space-y-2">
+              <h1 class="font-serif text-3xl font-black tracking-tight text-slate-950 dark:text-white sm:text-4xl">
+                {{ isEditMode ? '编辑文章' : '新建文章' }}
+              </h1>
+              <p class="text-sm leading-6 text-slate-500 dark:text-slate-400">
+                {{ loadingEditingPost ? '正在加载文章详情，请稍候。' : '标题、正文、封面、标签与发布设置统一集中在同一页维护。' }}
+              </p>
+            </div>
           </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 xl:w-auto">
+          <UButton
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-save"
+            class="justify-center"
+            :loading="submitting"
+            :disabled="submitting || loadingEditingPost || !canSubmitPost"
+            @click="submitPost('draft')"
+          >
+            {{ isEditMode ? '保存草稿' : '创建草稿' }}
+          </UButton>
+          <UButton
+            icon="i-lucide-send"
+            class="justify-center"
+            :loading="submitting"
+            :disabled="submitting || loadingEditingPost || !canSubmitPost"
+            @click="submitPost('published')"
+          >
+            {{ isEditMode ? '更新并发布' : '发布文章' }}
+          </UButton>
         </div>
       </div>
+    </section>
 
-      <div class="flex w-full sm:w-auto items-center gap-2 sm:gap-3">
-        <button type="button" :disabled="submitting || loadingEditingPost || !canSubmitPost" class="flex-1 sm:flex-none px-4 sm:px-6 h-10 bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 text-slate-600 dark:text-slate-300 text-xs sm:text-sm font-bold rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60" @click="submitPost('draft')">
-          存为草稿
-        </button>
-        <button type="button" :disabled="submitting || loadingEditingPost || !canSubmitPost" class="flex flex-1 sm:flex-none items-center justify-center gap-2 px-4 sm:px-6 h-10 bg-brand-600 hover:bg-brand-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_4px_12px_rgba(var(--color-brand-500),0.25)] hover:shadow-[0_6px_16px_rgba(var(--color-brand-500),0.35)] transition-all active:scale-95 group disabled:cursor-not-allowed disabled:opacity-60" @click="submitPost('published')">
-          <Send :size="16" class="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-          立即发布
-        </button>
+    <div
+      :inert="loadingEditingPost"
+      :aria-busy="loadingEditingPost"
+      :class="loadingEditingPost ? 'pointer-events-none opacity-70' : ''"
+      class="grid gap-6 xl:grid-cols-[18rem_minmax(0,1fr)_20rem]"
+    >
+      <div class="order-2 space-y-6 xl:order-1">
+        <UCard
+          :ui="{
+            root: 'admin-theme-card rounded-[2rem] shadow-none ring-0',
+            header: 'p-5 sm:p-6',
+            body: 'px-5 pb-5 sm:px-6 sm:pb-6'
+          }"
+        >
+          <template #header>
+            <div class="flex items-start gap-3">
+              <div class="grid size-10 place-items-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-950/40 dark:text-brand-300">
+                <UIcon name="i-lucide-settings-2" class="size-5" />
+              </div>
+              <div>
+                <h2 class="text-lg font-black text-slate-950 dark:text-white">发布设置</h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">管理分类、链接别名与置顶状态。</p>
+              </div>
+            </div>
+          </template>
+
+          <div class="space-y-5">
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-slate-900 dark:text-white">URL 别名</label>
+              <UInput
+                v-model="post.slug"
+                :disabled="loadingEditingPost"
+                icon="i-lucide-link-2"
+                size="lg"
+                placeholder="custom-url-slug"
+              />
+              <p class="text-xs text-slate-400">留空时由系统按标题生成。</p>
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-sm font-bold text-slate-900 dark:text-white">分类目录</label>
+              <USelectMenu
+                v-model="post.category"
+                :disabled="loadingEditingPost"
+                :items="categories"
+                size="lg"
+                placeholder="选择文章分类"
+                icon="i-lucide-layers-3"
+                trailing-icon="i-lucide-chevron-down"
+                class="w-full"
+              >
+                <template #item="{ item }">
+                  <div class="flex w-full items-center justify-between gap-3 rounded-xl px-2 py-1.5">
+                    <span
+                      class="truncate font-medium"
+                      :class="item === post.category ? 'text-brand-700 dark:text-brand-300' : 'text-slate-700 dark:text-slate-200'"
+                    >
+                      {{ item }}
+                    </span>
+                    <UIcon
+                      v-if="item === post.category"
+                      name="i-lucide-check"
+                      class="size-4 shrink-0 text-brand-600 dark:text-brand-300"
+                    />
+                  </div>
+                </template>
+              </USelectMenu>
+            </div>
+
+            <div class="rounded-[1.5rem] border border-white/70 bg-white/60 p-4 dark:border-slate-800/70 dark:bg-slate-950/40">
+              <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1">
+                  <p class="text-sm font-bold text-slate-900 dark:text-white">文章置顶</p>
+                  <p class="text-xs leading-5 text-slate-500 dark:text-slate-400">置顶文章会在列表页与部分推荐位优先显示。</p>
+                </div>
+                <USwitch v-model="post.isPinned" :disabled="loadingEditingPost" />
+              </div>
+            </div>
+          </div>
+        </UCard>
+
+        <UCard
+          :ui="{
+            root: 'admin-theme-card rounded-[2rem] shadow-none ring-0',
+            header: 'p-5 sm:p-6',
+            body: 'px-5 pb-5 sm:px-6 sm:pb-6'
+          }"
+        >
+          <template #header>
+            <div class="flex items-start gap-3">
+              <div class="grid size-10 place-items-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-300">
+                <UIcon name="i-lucide-tags" class="size-5" />
+              </div>
+              <div>
+                <h2 class="text-lg font-black text-slate-950 dark:text-white">标签与推荐</h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">当前最多支持 5 个标签，并保留最近使用记录。</p>
+              </div>
+            </div>
+          </template>
+
+          <div class="space-y-4">
+            <div
+              class="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-3 transition-all focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/10 dark:border-slate-800 dark:bg-slate-950/40"
+              @click="tagInputRef?.focus()"
+            >
+              <div class="flex flex-wrap items-center gap-2">
+                <span
+                  v-for="(tag, index) in post.tags"
+                  :key="tag"
+                  class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm dark:bg-slate-900 dark:text-slate-200"
+                >
+                  <span class="text-brand-500">#</span>
+                  {{ tag }}
+                  <button
+                    type="button"
+                    class="inline-flex rounded-full p-0.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-950/30"
+                    :disabled="loadingEditingPost"
+                    @click.stop="removeTag(index)"
+                  >
+                    <UIcon name="i-lucide-x" class="size-3" />
+                  </button>
+                </span>
+
+                <input
+                  ref="tagInputRef"
+                  v-model="tagInput"
+                  :disabled="loadingEditingPost"
+                  type="text"
+                  placeholder="输入标签后回车"
+                  class="min-w-[8rem] flex-1 bg-transparent px-2 py-1 text-sm text-slate-700 outline-none placeholder:text-slate-400 dark:text-slate-200"
+                  @keydown.enter.prevent="addTag"
+                >
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">历史标签</p>
+                <span class="text-xs text-slate-400 dark:text-slate-500">{{ displayedTagHistory.length }} 个</span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="historyTag in displayedTagHistory"
+                  :key="historyTag"
+                  type="button"
+                  class="inline-flex rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
+                  :class="post.tags.includes(historyTag)
+                    ? 'border-brand-200 bg-brand-50 text-brand-700 dark:border-brand-800/70 dark:bg-brand-950/40 dark:text-brand-300'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-brand-200 hover:text-brand-600 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-400 dark:hover:border-brand-800/70 dark:hover:text-brand-300'"
+                  :disabled="loadingEditingPost || (post.tags.length >= 5 && !post.tags.includes(historyTag))"
+                  @click="addHistoryTag(historyTag)"
+                >
+                  #{{ historyTag }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </UCard>
       </div>
-    </div>
 
-    <!-- Main Content Area -->
-    <div :inert="loadingEditingPost" :aria-busy="loadingEditingPost" :class="loadingEditingPost ? 'pointer-events-none opacity-70' : ''" class="grid grid-cols-1 gap-6 max-w-[1600px] mx-auto lg:grid-cols-2 xl:grid-cols-[17.5rem_minmax(0,1fr)_17.5rem] 2xl:grid-cols-[20rem_minmax(0,1fr)_20rem] xl:items-stretch xl:relative xl:right-4 2xl:gap-8">
-      
-      <!-- Cover Image Column (Right - 1/4 width) -->
-      <div class="w-full space-y-6 shrink-0 order-3 lg:col-span-1 xl:order-3 xl:self-stretch xl:flex xl:flex-col">
-        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-5 sm:p-7 space-y-5 shrink-0">
-          <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-              <ImageIcon :size="18" class="text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">
-              封面图片
-            </h3>
+      <div class="order-1 min-w-0 space-y-6 xl:order-2">
+        <UCard
+          :ui="{
+            root: 'admin-theme-card rounded-[2rem] shadow-none ring-0',
+            body: 'p-5 sm:p-6'
+          }"
+        >
+          <div class="space-y-3">
+            <label class="text-xs font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">文章标题</label>
+            <input
+              v-model="post.title"
+              :disabled="loadingEditingPost"
+              type="text"
+              placeholder="输入文章标题"
+              class="w-full bg-transparent text-3xl font-black tracking-tight text-slate-950 outline-none placeholder:text-slate-300 dark:text-white dark:placeholder:text-slate-600 sm:text-4xl"
+            >
           </div>
-          
-          <div class="relative w-full aspect-square sm:min-h-[18rem] sm:aspect-video lg:aspect-video rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex flex-col items-center justify-center overflow-hidden group hover:border-brand-500 hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-all cursor-pointer" @click="openCoverImagePicker">
-            <template v-if="post.cover">
-              <img :src="post.cover" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                <button type="button" class="px-5 py-2.5 bg-white text-slate-900 text-sm font-bold rounded-xl shadow-xl hover:scale-105 transition-transform" @click.stop="openCoverImagePicker">更换封面</button>
+        </UCard>
+
+        <UCard
+          :ui="{
+            root: 'admin-theme-card rounded-[2rem] shadow-none ring-0 overflow-hidden',
+            header: 'p-5 sm:p-6',
+            body: 'px-5 pb-5 sm:px-6 sm:pb-6'
+          }"
+        >
+          <template #header>
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="flex items-start gap-3">
+                <div class="grid size-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  <UIcon name="i-lucide-file-text" class="size-5" />
+                </div>
+                <div>
+                  <h2 class="text-lg font-black text-slate-950 dark:text-white">文章正文</h2>
+                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">保留现有 Markdown 编辑器、图片上传、附件插入与尺寸调整能力。</p>
+                </div>
               </div>
-            </template>
-            <template v-else>
-              <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl shadow-sm mb-4 group-hover:scale-110 group-hover:shadow-md transition-all">
-                <UploadCloud :size="28" class="text-slate-400 group-hover:text-brand-500 transition-colors" />
+              <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                <UIcon name="i-lucide-image-up" class="size-4" />
+                {{ pendingMediaUploadCount > 0 ? `正在上传 ${pendingMediaUploadCount} 项资源` : '编辑器工具栏已启用上传能力' }}
               </div>
-              <p class="text-sm font-bold text-slate-700 dark:text-slate-200 text-center">点击或拖拽上传封面</p>
-              <p class="text-[11px] font-medium text-slate-400 mt-2 text-center px-4">建议尺寸 1200×630px<br/>仅接受真实 JPG、PNG、WEBP、GIF、BMP、AVIF 图片二进制，最大 10MB</p>
-            </template>
-          </div>
-
-        </div>
-
-        <!-- Excerpt -->
-        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-5 sm:p-7 space-y-5 xl:flex-1 xl:min-h-0 xl:flex xl:flex-col">
-          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="flex items-center gap-3">
-              <div class="p-2 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                <FileText :size="18" class="text-purple-600 dark:text-purple-400" />
-              </div>
-              <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">
-                文章摘要
-              </h3>
             </div>
-            <span class="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-md">{{ post.excerpt.length }}/150</span>
-          </div>
-          
-          <textarea
-            v-model="post.excerpt"
-            :disabled="loadingEditingPost"
-            rows="4"
-            maxlength="150"
-            placeholder="简短的一段话描述文章核心内容，将展示在文章列表页及搜索引擎结果中..."
-            class="w-full p-3.5 sm:p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm text-slate-700 dark:text-slate-300 resize-none leading-relaxed xl:flex-1 xl:min-h-0"
-          ></textarea>
-        </div>
-      </div>
-
-      <!-- Title Column (Middle - Flexible width) -->
-      <div class="flex-1 space-y-6 order-1 min-w-0 lg:col-span-2 xl:col-span-1 xl:col-start-2 xl:order-2">
-        <!-- Title Input -->
-        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm overflow-hidden transition-shadow focus-within:shadow-md focus-within:border-brand-500/50">
-          <input
-            v-model="post.title"
-            :disabled="loadingEditingPost"
-            type="text"
-            placeholder="输入文章标题..."
-            class="w-full px-5 sm:px-8 py-4 sm:py-6 bg-transparent outline-none text-2xl sm:text-3xl font-black text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-700 font-serif transition-all"
-          />
-        </div>
-
-        <!-- Content Editor -->
-        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-5 sm:p-7 space-y-4">
-          <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
-              <FileText :size="18" class="text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">
-              文章正文
-            </h3>
-          </div>
+          </template>
 
           <UEditor
             ref="editorRef"
@@ -114,7 +266,7 @@
             v-model="post.contentMarkdown"
             content-type="markdown"
             placeholder="在此输入正文内容，支持 Markdown 与可视化排版..."
-            class="editor-content w-full rounded-2xl border border-slate-200 dark:border-slate-700"
+            class="editor-content w-full rounded-[1.5rem] border border-slate-200 dark:border-slate-800"
             :ui="editorUi"
             :extensions="editorExtensions"
             :handlers="editorCustomHandlers"
@@ -123,7 +275,7 @@
             <UEditorToolbar
               :editor="editor"
               :items="editorToolbarItems"
-              class="sticky top-0 z-10 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-t-2xl border-b border-slate-200 dark:border-slate-700 p-2"
+              class="sticky top-0 z-10 rounded-t-[1.5rem] border-b border-slate-200 bg-white/90 p-2 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90"
             />
             <UEditorToolbar
               :editor="editor"
@@ -133,139 +285,93 @@
               class="rounded-2xl border border-slate-200 bg-white/95 p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900/95"
             />
           </UEditor>
-        </div>
+        </UCard>
       </div>
 
-      <!-- Settings Column (Left - 1/4 width) -->
-      <div class="w-full space-y-6 shrink-0 order-2 lg:col-span-1 xl:order-1">
-        <!-- Publish Settings -->
-        <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-5 sm:p-7 space-y-6">
-          <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-            <div class="p-2 bg-brand-50 dark:bg-brand-900/30 rounded-lg">
-              <Settings2 :size="18" class="text-brand-600 dark:text-brand-400" />
-            </div>
-            <h3 class="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">
-              发布设置
-            </h3>
-          </div>
-          
-          <div class="space-y-5">
-            <!-- URL Slug -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-slate-500 flex items-center justify-between">
-                URL 别名（可选）
-                <span class="font-normal text-[10px] text-slate-400 border border-slate-200 dark:border-slate-700 px-1.5 py-0.5 rounded">.html</span>
-              </label>
-              <div class="relative group">
-                <Link :size="14" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors" />
-                <input
-                  v-model="post.slug"
-                  :disabled="loadingEditingPost"
-                  type="text"
-                  placeholder="custom-url-slug"
-                  class="w-full pl-9 pr-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all text-sm font-mono text-slate-700 dark:text-slate-300"
-                />
+      <div class="order-3 space-y-6 xl:order-3">
+        <UCard
+          :ui="{
+            root: 'admin-theme-card rounded-[2rem] shadow-none ring-0 overflow-hidden',
+            header: 'p-5 sm:p-6',
+            body: 'px-5 pb-5 sm:px-6 sm:pb-6'
+          }"
+        >
+          <template #header>
+            <div class="flex items-start gap-3">
+              <div class="grid size-10 place-items-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-300">
+                <UIcon name="i-lucide-image" class="size-5" />
+              </div>
+              <div>
+                <h2 class="text-lg font-black text-slate-950 dark:text-white">封面图片</h2>
+                <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">建议尺寸 1200 × 630，支持常见图片格式。</p>
               </div>
             </div>
+          </template>
 
-            <!-- Category -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-slate-500">分类目录</label>
-
-              <div
-                class="relative flex items-center bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800"
-                :class="post.category ? 'border-brand-200 dark:border-brand-800/70' : ''"
-              >
-                <USelectMenu
-                  v-model="post.category"
-                  :disabled="loadingEditingPost"
-                  :items="categories"
-                  placeholder="选择一个分类..."
-                  icon="i-lucide-layers-3"
-                  trailing-icon="i-lucide-chevron-down"
-                  color="neutral"
-                  variant="ghost"
-                  :ui="{
-                    base: '!shadow-none ring-0 focus:bg-transparent focus:ring-0 focus-visible:ring-0 focus-visible:shadow-none focus-visible:outline-none',
-                  }"
-                  class="w-full rounded-lg"
-                >
-                  <template #item="{ item }">
-                    <div
-                      class="w-full flex items-center justify-between gap-3 rounded-lg px-1.5 py-1 transition-colors"
-                      :class="item === post.category ? 'bg-slate-100 dark:bg-slate-800' : ''"
-                    >
-                      <span class="flex items-center gap-2 min-w-0">
-                        <span
-                          class="w-1.5 h-1.5 rounded-full"
-                          :class="item === post.category ? 'bg-brand-500' : 'bg-slate-300 dark:bg-slate-600'"
-                        />
-                        <span
-                          class="truncate font-medium"
-                          :class="item === post.category ? 'text-brand-700 dark:text-brand-300' : 'text-slate-700 dark:text-slate-200'"
-                        >
-                          {{ item }}
-                        </span>
-                      </span>
-                      <Check
-                        v-if="item === post.category"
-                        :size="14"
-                        class="text-brand-600 dark:text-brand-300 shrink-0"
-                      />
-                    </div>
-                  </template>
-                </USelectMenu>
+          <button
+            type="button"
+            class="group relative flex w-full flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center transition-all hover:border-brand-300 hover:bg-brand-50/70 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-brand-800/70 dark:hover:bg-brand-950/20"
+            @click="openCoverImagePicker"
+          >
+            <img
+              v-if="post.cover"
+              :src="post.cover"
+              alt="文章封面"
+              class="h-56 w-full rounded-[1.25rem] object-cover shadow-lg transition-transform duration-300 group-hover:scale-[1.02]"
+            >
+            <template v-else>
+              <div class="grid size-14 place-items-center rounded-2xl bg-white text-brand-600 shadow-sm dark:bg-slate-900 dark:text-brand-300">
+                <UIcon name="i-lucide-upload-cloud" class="size-7" />
               </div>
+              <p class="mt-4 text-sm font-bold text-slate-900 dark:text-white">点击上传封面图片</p>
+              <p class="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                仅接受 JPG、PNG、WEBP、GIF、BMP、AVIF，文件大小上限 10 MB。
+              </p>
+            </template>
+
+            <div
+              v-if="post.cover"
+              class="absolute inset-x-4 bottom-4 rounded-2xl bg-slate-950/65 px-4 py-3 text-left text-white backdrop-blur"
+            >
+              <p class="text-sm font-bold">当前已设置封面</p>
+              <p class="mt-1 text-xs text-white/75">再次点击可重新选择文件。</p>
             </div>
+          </button>
+        </UCard>
 
-            <!-- Tags -->
-            <div class="space-y-2">
-              <label class="text-xs font-bold text-slate-500 flex justify-between items-center">
-                内容标签
-                <span class="font-normal text-[10px] text-slate-400">{{ post.tags.length }}/5</span>
-              </label>
-              <div class="p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl min-h-[48px] flex flex-wrap gap-2 items-center focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-500/10 transition-all cursor-text" @click="tagInputRef?.focus()">
-                <TransitionGroup name="list">
-                  <span v-for="(tag, index) in post.tags" :key="tag" class="flex items-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg shadow-sm border border-slate-200/50 dark:border-slate-600">
-                    <span class="text-brand-500 font-normal">#</span>{{ tag }}
-                    <button :disabled="loadingEditingPost" @click.stop="removeTag(index)" class="text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded p-0.5 transition-colors disabled:cursor-not-allowed disabled:opacity-40"><X :size="12" /></button>
-                  </span>
-                </TransitionGroup>
-                <input
-                  ref="tagInputRef"
-                  v-model="tagInput"
-                  :disabled="loadingEditingPost"
-                  @keydown.enter.prevent="addTag"
-                  type="text"
-                  placeholder="输入标签后回车..."
-                  class="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm px-2 text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
-                />
-              </div>
-
-              <div class="pt-1 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">历史标签</span>
-                  <span class="text-[10px] text-slate-400">{{ displayedTagHistory.length }} 个</span>
+        <UCard
+          :ui="{
+            root: 'admin-theme-card rounded-[2rem] shadow-none ring-0',
+            header: 'p-5 sm:p-6',
+            body: 'px-5 pb-5 sm:px-6 sm:pb-6'
+          }"
+        >
+          <template #header>
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-start gap-3">
+                <div class="grid size-10 place-items-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-950/40 dark:text-purple-300">
+                  <UIcon name="i-lucide-file-text" class="size-5" />
                 </div>
-                <div class="flex flex-wrap gap-2">
-                  <button
-                    v-for="historyTag in displayedTagHistory"
-                    :key="historyTag"
-                    type="button"
-                    :disabled="loadingEditingPost || (post.tags.length >= 5 && !post.tags.includes(historyTag))"
-                    @click="addHistoryTag(historyTag)"
-                    class="px-2.5 py-1 text-[11px] font-bold rounded-lg border transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    :class="post.tags.includes(historyTag)
-                      ? 'bg-brand-50 text-brand-700 border-brand-200 dark:bg-brand-900/30 dark:text-brand-300 dark:border-brand-800/70'
-                      : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-200 hover:text-brand-600 dark:hover:border-brand-800/70 dark:hover:text-brand-300'"
-                  >
-                    #{{ historyTag }}
-                  </button>
+                <div>
+                  <h2 class="text-lg font-black text-slate-950 dark:text-white">文章摘要</h2>
+                  <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">摘要会展示在文章列表页与搜索结果描述中。</p>
                 </div>
               </div>
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                {{ post.excerpt.length }}/150
+              </span>
             </div>
-          </div>
-        </div>
+          </template>
+
+          <textarea
+            v-model="post.excerpt"
+            :disabled="loadingEditingPost"
+            rows="8"
+            maxlength="150"
+            placeholder="简要描述文章核心内容，便于列表页与搜索结果展示。"
+            class="min-h-44 w-full rounded-[1.5rem] border border-slate-200 bg-slate-50/70 px-4 py-3 text-sm leading-6 text-slate-700 outline-none transition-all focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200"
+          />
+        </UCard>
       </div>
     </div>
   </div>
@@ -279,17 +385,6 @@ import Image from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import type { EditorCustomHandlers } from '@nuxt/ui';
 import type { EditorToolbarItem } from '@nuxt/ui';
-import {
-  ArrowLeft,
-  Send,
-  Settings2,
-  X, 
-  Check,
-  Image as ImageIcon,
-  UploadCloud,
-  FileText,
-  Link
-} from 'lucide-vue-next';
 import { uploadAssets } from '~/services/admin-media';
 import { listPostCategories } from '~/services/admin-post-category';
 import { adminPostEditorToolbarItems } from '~/constants/admin-post-editor-toolbar';

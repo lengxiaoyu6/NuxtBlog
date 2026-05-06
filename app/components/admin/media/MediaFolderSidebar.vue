@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { FolderTree, PencilLine, Trash2 } from 'lucide-vue-next';
+import { FolderTree, PencilLine, Trash2 } from '~/utils/admin-lucide-icons';
 import type { MediaFolder } from '~/types/admin-media';
 
 defineProps<{

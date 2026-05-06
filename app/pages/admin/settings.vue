@@ -1,201 +1,148 @@
 <template>
-    <div class="space-y-8 pb-20">
-        <section
-            class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div class="space-y-3">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <h1 class="font-serif text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-                            系统设置
-                        </h1>
-                        <span
-                            class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold"
-                            :class="saveStateMeta.badgeClass">
-                            <component
-                                :is="saveStateMeta.icon"
-                                :size="14"
-                                :class="saveState === 'saving' ? 'animate-spin' : ''" />
-                            {{ saveStateMeta.label }}
-                        </span>
-                    </div>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">{{ currentTabDescription }}</p>
-                    <div
-                        v-if="feedbackMessage"
-                        class="inline-flex max-w-full items-start gap-2 rounded-2xl border px-4 py-3 text-sm"
-                        :class="
-                            feedbackTone === 'error'
-                                ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200'
-                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200'
-                        ">
-                        <AlertCircle v-if="feedbackTone === 'error'" :size="16" class="mt-0.5 shrink-0" />
-                        <ShieldCheck v-else :size="16" class="mt-0.5 shrink-0" />
-                        <span>{{ feedbackMessage }}</span>
-                    </div>
-                </div>
-
-                <div class="grid gap-3 sm:grid-cols-2 xl:w-[22rem]">
-                    <button
-                        type="button"
-                        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800"
-                        :disabled="isActionDisabled"
-                        @click="resetForm">
-                        <RotateCcw :size="16" />
-                        重置本页
-                    </button>
-                    <button
-                        type="button"
-                        class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
-                        :disabled="isActionDisabled"
-                        @click="saveSettings">
-                        <LoaderCircle v-if="saveState === 'saving'" :size="16" class="animate-spin" />
-                        <Save v-else :size="16" />
-                        {{ saveState === 'saving' ? '保存中...' : '保存修改' }}
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <div
-            class="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-2 dark:border-slate-800 dark:bg-slate-900/40">
-            <button
-                type="button"
-                class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
-                :class="
-                    activeTab === 'site'
-                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                "
-                @click="activeTab = 'site'">
-                站点资料
-            </button>
-            <button
-                type="button"
-                class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
-                :class="
-                    activeTab === 'owner'
-                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                "
-                @click="activeTab = 'owner'">
-                站长资料
-            </button>
-            <button
-                type="button"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all"
-                :class="
-                    activeTab === 'socialLinks'
-                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                "
-                @click="activeTab = 'socialLinks'">
-                <span>社交链接</span>
-                <span
-                    class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]"
-                    :class="
-                        activeTab === 'socialLinks'
-                            ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300'
-                            : 'bg-slate-200/70 text-slate-500 dark:bg-slate-800 dark:text-slate-300'
-                    ">
-                    {{ form.socialLinks.length }}
-                </span>
-            </button>
-            <button
-                type="button"
-                class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all"
-                :class="
-                    activeTab === 'navItems'
-                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                "
-                @click="activeTab = 'navItems'">
-                <span>顶部导航</span>
-                <span
-                    class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]"
-                    :class="
-                        activeTab === 'navItems'
-                            ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300'
-                            : 'bg-slate-200/70 text-slate-500 dark:bg-slate-800 dark:text-slate-300'
-                    ">
-                    {{ form.navItems.length }}
-                </span>
-            </button>
-            <button
-                type="button"
-                class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
-                :class="
-                    activeTab === 'security'
-                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                "
-                @click="activeTab = 'security'">
-                安全策略
-            </button>
-            <button
-                type="button"
-                class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
-                :class="
-                    activeTab === 'footer'
-                        ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                "
-                @click="activeTab = 'footer'">
-                页脚与联系
-            </button>
+  <div class="space-y-8 pb-20">
+    <UCard :ui="{ root: 'admin-theme-card rounded-[2rem] border-slate-200/80 dark:border-slate-700/80', body: 'p-5 sm:p-6' }">
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <h1 class="font-serif text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+              系统设置
+            </h1>
+            <span
+              class="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold"
+              :class="saveStateMeta.badgeClass"
+            >
+              <component :is="saveStateMeta.icon" :size="14" :class="saveState === 'saving' ? 'animate-spin' : ''" />
+              {{ saveStateMeta.label }}
+            </span>
+          </div>
+          <p class="text-sm text-slate-500 dark:text-slate-400">{{ currentTabDescription }}</p>
+          <div
+            v-if="feedbackMessage"
+            class="inline-flex max-w-full items-start gap-2 rounded-2xl border px-4 py-3 text-sm"
+            :class="feedbackTone === 'error'
+              ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200'
+              : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200'"
+          >
+            <UIcon v-if="feedbackTone === 'error'" name="i-lucide-alert-circle" class="mt-0.5 size-4 shrink-0" />
+            <UIcon v-else name="i-lucide-shield-check" class="mt-0.5 size-4 shrink-0" />
+            <span>{{ feedbackMessage }}</span>
+          </div>
         </div>
 
-        <div v-if="activeTab === 'site'" class="space-y-8">
-            <section
-                class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-                <div class="mb-6 flex items-center gap-3">
-                    <div
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
-                        <Globe2 :size="22" />
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-black text-slate-900 dark:text-white">站点资料</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">
-                            维护站点名称、站点链接、简介与品牌标识。
-                        </p>
-                    </div>
-                </div>
+        <div class="grid gap-3 sm:grid-cols-2 xl:w-[22rem]">
+          <UButton
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-rotate-ccw"
+            class="justify-center"
+            :disabled="isActionDisabled"
+            @click="resetForm"
+          >
+            重置本页
+          </UButton>
+          <UButton
+            icon="i-lucide-save"
+            class="justify-center"
+            :loading="saveState === 'saving'"
+            :disabled="isActionDisabled"
+            @click="saveSettings"
+          >
+            {{ saveState === 'saving' ? '保存中...' : '保存修改' }}
+          </UButton>
+        </div>
+      </div>
+    </UCard>
 
-                <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-                    <div class="space-y-6">
-                        <div class="space-y-2">
-                            <label for="site-name" class="text-sm font-bold text-slate-900 dark:text-white"
-                                >站点名称</label
-                            >
-                            <input
-                                id="site-name"
-                                v-model="form.site.name"
-                                type="text"
-                                maxlength="40"
-                                placeholder="输入站点名称"
-                                class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
-                                :class="getInputClass('site', 'name')" />
-                            <div class="flex items-center justify-between gap-3 text-xs">
-                                <span class="text-rose-500 dark:text-rose-300">{{
-                                    getFieldError('site', 'name')
-                                }}</span>
-                                <span class="text-slate-400">{{ form.site.name.trim().length }}/40</span>
-                            </div>
-                        </div>
+    <div class="admin-theme-card flex flex-wrap items-center gap-3 rounded-2xl p-2">
+      <button
+        type="button"
+        class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
+        :class="activeTab === 'site'
+          ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
+          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+        @click="activeTab = 'site'"
+      >
+        站点资料
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
+        :class="activeTab === 'owner'
+          ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
+          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+        @click="activeTab = 'owner'"
+      >
+        站长资料
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all"
+        :class="activeTab === 'socialLinks'
+          ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
+          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+        @click="activeTab = 'socialLinks'"
+      >
+        <span>社交链接</span>
+        <span
+          class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]"
+          :class="activeTab === 'socialLinks'
+            ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300'
+            : 'bg-slate-200/70 text-slate-500 dark:bg-slate-800 dark:text-slate-300'"
+        >
+          {{ form.socialLinks.length }}
+        </span>
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all"
+        :class="activeTab === 'navItems'
+          ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
+          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+        @click="activeTab = 'navItems'"
+      >
+        <span>顶部导航</span>
+        <span
+          class="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-[11px]"
+          :class="activeTab === 'navItems'
+            ? 'bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300'
+            : 'bg-slate-200/70 text-slate-500 dark:bg-slate-800 dark:text-slate-300'"
+        >
+          {{ form.navItems.length }}
+        </span>
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
+        :class="activeTab === 'security'
+          ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
+          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+        @click="activeTab = 'security'"
+      >
+        安全策略
+      </button>
+      <button
+        type="button"
+        class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
+        :class="activeTab === 'footer'
+          ? 'bg-white text-brand-600 shadow-sm dark:bg-slate-800 dark:text-white'
+          : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
+        @click="activeTab = 'footer'"
+      >
+        页脚与联系
+      </button>
+    </div>
 
-                        <div class="space-y-2">
-                            <label for="site-url" class="text-sm font-bold text-slate-900 dark:text-white"
-                                >站点链接</label
-                            >
-                            <input
-                                id="site-url"
-                                v-model="form.site.url"
-                                type="url"
-                                placeholder="https://example.com"
-                                class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
-                                :class="getInputClass('site', 'url')" />
-                            <p v-if="getFieldError('site', 'url')" class="text-xs text-rose-500 dark:text-rose-300">
-                                {{ getFieldError('site', 'url') }}
-                            </p>
-                        </div>
+    <div v-if="activeTab === 'site'" class="space-y-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
+          <Globe2 :size="22" />
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-slate-900 dark:text-white">站点资料</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">维护站点名称、站点链接、简介与品牌标识。</p>
+        </div>
+      </div>
 
                         <div class="space-y-2">
                             <label for="site-description" class="text-sm font-bold text-slate-900 dark:text-white"
@@ -289,19 +236,16 @@
             </section>
         </div>
 
-        <div v-else-if="activeTab === 'owner'" class="space-y-8">
-            <section
-                class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-                <div class="mb-6 flex items-center gap-3">
-                    <div
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
-                        <UserRound :size="22" />
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-black text-slate-900 dark:text-white">站长资料</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">维护头像、昵称、简介以及位置标识。</p>
-                    </div>
-                </div>
+        <div class="admin-theme-card rounded-[2rem] border-dashed p-5">
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-300">
+              <ImagePlus :size="20" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">站点 Logo</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">建议使用正方形 PNG、SVG 或 WebP</p>
+            </div>
+          </div>
 
                 <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
                     <div class="space-y-6">
@@ -373,26 +317,17 @@
                                 </p>
                             </div>
 
-                            <div class="space-y-2">
-                                <label for="owner-tagline" class="text-sm font-bold text-slate-900 dark:text-white"
-                                    >身份短句</label
-                                >
-                                <input
-                                    id="owner-tagline"
-                                    v-model="form.owner.tagline"
-                                    type="text"
-                                    maxlength="80"
-                                    placeholder="例如：Based in Earth"
-                                    class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
-                                    :class="getInputClass('owner', 'tagline')" />
-                                <p
-                                    v-if="getFieldError('owner', 'tagline')"
-                                    class="text-xs text-rose-500 dark:text-rose-300">
-                                    {{ getFieldError('owner', 'tagline') }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+    <div v-else-if="activeTab === 'owner'" class="space-y-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
+          <UserRound :size="22" />
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-slate-900 dark:text-white">站长资料</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">维护头像、昵称、简介以及位置标识。</p>
+        </div>
+      </div>
 
                     <div
                         class="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-950/40">
@@ -451,19 +386,16 @@
             </section>
         </div>
 
-        <div v-else-if="activeTab === 'socialLinks'" class="space-y-8">
-            <section
-                class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-                <div class="mb-6 flex items-center gap-3">
-                    <div
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300">
-                        <Share2 :size="22" />
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-black text-slate-900 dark:text-white">社交链接</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">控制首页侧栏图标、显示名称与链接顺序。</p>
-                    </div>
-                </div>
+        <div class="admin-theme-card rounded-[2rem] border-dashed p-5">
+          <div class="flex items-center gap-3">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-300">
+              <ImagePlus :size="20" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">站长头像</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">用于首页侧栏头像展示</p>
+            </div>
+          </div>
 
                 <div class="space-y-4">
                     <article
@@ -552,112 +484,11 @@
             </section>
         </div>
 
-        <div v-else-if="activeTab === 'navItems'" class="space-y-8">
-            <section
-                class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-                <div class="mb-6 flex items-center gap-3">
-                    <div
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300">
-                        <Link2 :size="22" />
-                    </div>
-                    <div>
-                        <h2 class="text-lg font-black text-slate-900 dark:text-white">顶部导航</h2>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">
-                            维护顶部导航项的名称、顺序、地址与打开方式。
-                        </p>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">顶部导航项</h3>
-                            <p class="text-xs text-slate-500 dark:text-slate-400">
-                                支持修改顶部导航名称、顺序、地址与新窗口打开。
-                            </p>
-                        </div>
-                    </div>
-
-                    <article
-                        v-for="(item, index) in form.navItems"
-                        :key="item.id"
-                        class="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40">
-                        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
-                            <div class="space-y-2">
-                                <label class="text-xs font-bold uppercase tracking-widest text-slate-400"
-                                    >导航名称</label
-                                >
-                                <input
-                                    v-model="item.label"
-                                    type="text"
-                                    maxlength="20"
-                                    placeholder="例如：关于"
-                                    class="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
-                            </div>
-
-                            <div class="space-y-2">
-                                <label class="text-xs font-bold uppercase tracking-widest text-slate-400"
-                                    >链接地址</label
-                                >
-                                <input
-                                    v-model="item.href"
-                                    type="text"
-                                    placeholder="/about 或 https://example.com"
-                                    class="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" />
-                            </div>
-
-                            <div class="flex flex-wrap items-end justify-between gap-3 xl:justify-end">
-                                <label
-                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                                    <input
-                                        v-model="item.enabled"
-                                        type="checkbox"
-                                        class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-                                    启用
-                                </label>
-                                <label
-                                    class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
-                                    <input
-                                        v-model="item.openInNewTab"
-                                        type="checkbox"
-                                        class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500" />
-                                    新窗口
-                                </label>
-                                <div class="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white"
-                                        :disabled="index === 0"
-                                        @click="moveNavItem(item.id, 'up')">
-                                        <ArrowUp :size="16" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white"
-                                        :disabled="index === form.navItems.length - 1"
-                                        @click="moveNavItem(item.id, 'down')">
-                                        <ArrowDown :size="16" />
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
-                                        @click="removeNavItem(item.id)">
-                                        <Trash2 :size="16" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-
-                    <button
-                        type="button"
-                        class="inline-flex items-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:border-brand-400 hover:text-brand-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-brand-500 dark:hover:text-brand-300"
-                        @click="addNavItem">
-                        <Plus :size="16" />
-                        新增导航
-                    </button>
-                </div>
-            </section>
+    <div v-else-if="activeTab === 'socialLinks'" class="space-y-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300">
+          <Share2 :size="22" />
         </div>
 
         <div v-else-if="activeTab === 'security'" class="space-y-8">
@@ -1279,33 +1110,517 @@
             </div>
         </section>
     </div>
+
+    <div v-else-if="activeTab === 'navItems'" class="space-y-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300">
+          <Link2 :size="22" />
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-slate-900 dark:text-white">顶部导航</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">维护顶部导航项的名称、顺序、地址与打开方式。</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">顶部导航项</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">支持修改顶部导航名称、顺序、地址与新窗口打开。</p>
+          </div>
+        </div>
+
+        <article
+          v-for="(item, index) in form.navItems"
+          :key="item.id"
+          class="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40"
+        >
+          <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+            <div class="space-y-2">
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-400">导航名称</label>
+              <input
+                v-model="item.label"
+                type="text"
+                maxlength="20"
+                placeholder="例如：关于"
+                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              >
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-400">链接地址</label>
+              <input
+                v-model="item.href"
+                type="text"
+                placeholder="/about 或 https://example.com"
+                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              >
+            </div>
+
+            <div class="flex flex-wrap items-end justify-between gap-3 xl:justify-end">
+              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                <input v-model="item.enabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                启用
+              </label>
+              <label class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+                <input v-model="item.openInNewTab" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                新窗口
+              </label>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white"
+                  :disabled="index === 0"
+                  @click="moveNavItem(item.id, 'up')"
+                >
+                  <ArrowUp :size="16" />
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:text-white"
+                  :disabled="index === form.navItems.length - 1"
+                  @click="moveNavItem(item.id, 'down')"
+                >
+                  <ArrowDown :size="16" />
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300"
+                  @click="removeNavItem(item.id)"
+                >
+                  <Trash2 :size="16" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl border border-dashed border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:border-brand-400 hover:text-brand-600 dark:border-slate-700 dark:text-slate-200 dark:hover:border-brand-500 dark:hover:text-brand-300"
+          @click="addNavItem"
+        >
+          <Plus :size="16" />
+          新增导航
+        </button>
+      </div>
+      </section>
+    </div>
+
+    <div v-else-if="activeTab === 'security'" class="space-y-8">
+      <UCard :ui="{ root: 'admin-theme-card rounded-[2rem] border-slate-200/80 dark:border-slate-700/80', body: 'p-5 sm:p-6' }">
+        <template #header>
+          <div class="flex items-center gap-3">
+            <div class="grid size-10 place-items-center rounded-2xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-300">
+              <UIcon name="i-lucide-sliders-horizontal" class="size-5" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">配置概览</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">常用开关集中显示，可与下方完整配置保持同步。</p>
+            </div>
+          </div>
+        </template>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <UFormField label="登录人机校验">
+            <USwitch v-model="form.security.login.captchaEnabled" label="开启" />
+          </UFormField>
+          <UFormField label="评论人机校验">
+            <USwitch v-model="form.security.comments.captchaEnabled" label="开启" />
+          </UFormField>
+          <UFormField label="留言人机校验">
+            <USwitch v-model="form.security.guestbook.captchaEnabled" label="开启" />
+          </UFormField>
+          <UFormField label="友链人机校验">
+            <USwitch v-model="form.security.linkApplications.captchaEnabled" label="开启" />
+          </UFormField>
+        </div>
+      </UCard>
+
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+        <div class="mb-6 flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
+            <ShieldCheck :size="22" />
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-slate-900 dark:text-white">安全策略</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">维护公开接口的人机校验、限流与登录保护参数。</p>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label for="security-turnstile-site-key" class="text-sm font-bold text-slate-900 dark:text-white">Turnstile Site Key</label>
+          <input
+            id="security-turnstile-site-key"
+            v-model="form.security.turnstileSiteKey"
+            type="text"
+            placeholder="填写 Cloudflare Turnstile Site Key"
+            class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
+            :class="getInputClass('security', 'turnstileSiteKey')"
+          >
+          <div class="flex items-center justify-between gap-3 text-xs">
+            <span class="text-slate-400">登录、评论、留言或友链申请启用人机校验时需要填写。</span>
+            <span class="text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'turnstileSiteKey') }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+        <div class="mb-6 flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
+            <ShieldCheck :size="22" />
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-slate-900 dark:text-white">登录保护</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">控制后台登录的人机校验、失败次数与冷却时间。</p>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+            <input v-model="form.security.login.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+            启用登录人机校验
+          </label>
+
+          <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div class="space-y-2">
+              <label for="security-login-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+              <input id="security-login-window" v-model.number="form.security.login.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.rateLimit.windowSeconds')">
+              <p v-if="getFieldError('security', 'login.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.rateLimit.windowSeconds') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+              <input id="security-login-ip" v-model.number="form.security.login.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.rateLimit.maxPerIp')">
+              <p v-if="getFieldError('security', 'login.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.rateLimit.maxPerIp') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+              <input id="security-login-session" v-model.number="form.security.login.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.rateLimit.maxPerSession')">
+              <p v-if="getFieldError('security', 'login.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.rateLimit.maxPerSession') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-failures" class="text-sm font-bold text-slate-900 dark:text-white">失败次数上限</label>
+              <input id="security-login-failures" v-model.number="form.security.login.maxFailures" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.maxFailures')">
+              <p v-if="getFieldError('security', 'login.maxFailures')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.maxFailures') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-login-cooldown" class="text-sm font-bold text-slate-900 dark:text-white">冷却时间</label>
+              <input id="security-login-cooldown" v-model.number="form.security.login.cooldownSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'login.cooldownSeconds')">
+              <p v-if="getFieldError('security', 'login.cooldownSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'login.cooldownSeconds') }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid gap-6 xl:grid-cols-2">
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">评论提交</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制公开评论接口的校验与频率。</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+              <input v-model="form.security.comments.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+              启用评论人机校验
+            </label>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label for="security-comments-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+                <input id="security-comments-window" v-model.number="form.security.comments.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'comments.rateLimit.windowSeconds')">
+                <p v-if="getFieldError('security', 'comments.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'comments.rateLimit.windowSeconds') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-comments-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+                <input id="security-comments-ip" v-model.number="form.security.comments.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'comments.rateLimit.maxPerIp')">
+                <p v-if="getFieldError('security', 'comments.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'comments.rateLimit.maxPerIp') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-comments-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+                <input id="security-comments-session" v-model.number="form.security.comments.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'comments.rateLimit.maxPerSession')">
+                <p v-if="getFieldError('security', 'comments.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'comments.rateLimit.maxPerSession') }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">留言提交</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制留言接口的校验与频率。</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+              <input v-model="form.security.guestbook.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+              启用留言人机校验
+            </label>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label for="security-guestbook-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+                <input id="security-guestbook-window" v-model.number="form.security.guestbook.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'guestbook.rateLimit.windowSeconds')">
+                <p v-if="getFieldError('security', 'guestbook.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'guestbook.rateLimit.windowSeconds') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-guestbook-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+                <input id="security-guestbook-ip" v-model.number="form.security.guestbook.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'guestbook.rateLimit.maxPerIp')">
+                <p v-if="getFieldError('security', 'guestbook.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'guestbook.rateLimit.maxPerIp') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-guestbook-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+                <input id="security-guestbook-session" v-model.number="form.security.guestbook.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'guestbook.rateLimit.maxPerSession')">
+                <p v-if="getFieldError('security', 'guestbook.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'guestbook.rateLimit.maxPerSession') }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">友链申请</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制友链申请接口的校验与频率。</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <label class="inline-flex items-center gap-3 text-sm font-bold text-slate-900 dark:text-white">
+              <input v-model="form.security.linkApplications.captchaEnabled" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-700">
+              启用友链申请人机校验
+            </label>
+
+            <div class="grid gap-6 md:grid-cols-3">
+              <div class="space-y-2">
+                <label for="security-links-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+                <input id="security-links-window" v-model.number="form.security.linkApplications.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'linkApplications.rateLimit.windowSeconds')">
+                <p v-if="getFieldError('security', 'linkApplications.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'linkApplications.rateLimit.windowSeconds') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-links-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+                <input id="security-links-ip" v-model.number="form.security.linkApplications.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'linkApplications.rateLimit.maxPerIp')">
+                <p v-if="getFieldError('security', 'linkApplications.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'linkApplications.rateLimit.maxPerIp') }}</p>
+              </div>
+              <div class="space-y-2">
+                <label for="security-links-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+                <input id="security-links-session" v-model.number="form.security.linkApplications.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'linkApplications.rateLimit.maxPerSession')">
+                <p v-if="getFieldError('security', 'linkApplications.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'linkApplications.rateLimit.maxPerSession') }}</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+          <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300">
+              <ShieldCheck :size="22" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">点赞提交</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">控制公开点赞接口的访问频率。</p>
+            </div>
+          </div>
+
+          <div class="grid gap-6 md:grid-cols-3">
+            <div class="space-y-2">
+              <label for="security-likes-window" class="text-sm font-bold text-slate-900 dark:text-white">时间窗口</label>
+              <input id="security-likes-window" v-model.number="form.security.likes.rateLimit.windowSeconds" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'likes.rateLimit.windowSeconds')">
+              <p v-if="getFieldError('security', 'likes.rateLimit.windowSeconds')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'likes.rateLimit.windowSeconds') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-likes-ip" class="text-sm font-bold text-slate-900 dark:text-white">每个 IP 上限</label>
+              <input id="security-likes-ip" v-model.number="form.security.likes.rateLimit.maxPerIp" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'likes.rateLimit.maxPerIp')">
+              <p v-if="getFieldError('security', 'likes.rateLimit.maxPerIp')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'likes.rateLimit.maxPerIp') }}</p>
+            </div>
+            <div class="space-y-2">
+              <label for="security-likes-session" class="text-sm font-bold text-slate-900 dark:text-white">每个会话上限</label>
+              <input id="security-likes-session" v-model.number="form.security.likes.rateLimit.maxPerSession" type="number" min="1" class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100" :class="getInputClass('security', 'likes.rateLimit.maxPerSession')">
+              <p v-if="getFieldError('security', 'likes.rateLimit.maxPerSession')" class="text-xs text-rose-500 dark:text-rose-300">{{ getFieldError('security', 'likes.rateLimit.maxPerSession') }}</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </div>
+
+
+    <div v-else-if="activeTab === 'footer'" class="space-y-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
+      <div class="mb-6 flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <Mail :size="22" />
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-slate-900 dark:text-white">页脚与联系</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">维护联系邮箱、版权文案、备案信息与补充说明。</p>
+        </div>
+      </div>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        <div class="space-y-2">
+          <label for="footer-contact-email" class="text-sm font-bold text-slate-900 dark:text-white">联系邮箱</label>
+          <input
+            id="footer-contact-email"
+            v-model="form.footer.contactEmail"
+            type="email"
+            placeholder="hello@example.com"
+            class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
+            :class="getInputClass('footer', 'contactEmail')"
+          >
+          <p v-if="getFieldError('footer', 'contactEmail')" class="text-xs text-rose-500 dark:text-rose-300">
+            {{ getFieldError('footer', 'contactEmail') }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <label for="footer-copyright" class="text-sm font-bold text-slate-900 dark:text-white">版权文案</label>
+          <input
+            id="footer-copyright"
+            v-model="form.footer.copyright"
+            type="text"
+            maxlength="120"
+            placeholder="例如：© 2026 TechFlow. Built with Nuxt & Tailwind."
+            class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
+            :class="getInputClass('footer', 'copyright')"
+          >
+          <p v-if="getFieldError('footer', 'copyright')" class="text-xs text-rose-500 dark:text-rose-300">
+            {{ getFieldError('footer', 'copyright') }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <label for="footer-icp-text" class="text-sm font-bold text-slate-900 dark:text-white">备案号文本</label>
+          <input
+            id="footer-icp-text"
+            v-model="form.footer.icpText"
+            type="text"
+            maxlength="60"
+            placeholder="例如：京ICP备2026000000号-1"
+            class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
+            :class="getInputClass('footer', 'icpText')"
+          >
+          <p v-if="getFieldError('footer', 'icpText')" class="text-xs text-rose-500 dark:text-rose-300">
+            {{ getFieldError('footer', 'icpText') }}
+          </p>
+        </div>
+
+        <div class="space-y-2">
+          <label for="footer-icp-link" class="text-sm font-bold text-slate-900 dark:text-white">备案链接</label>
+          <input
+            id="footer-icp-link"
+            v-model="form.footer.icpLink"
+            type="url"
+            placeholder="https://beian.miit.gov.cn/"
+            class="h-11 w-full rounded-xl border bg-slate-50 px-4 text-sm text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
+            :class="getInputClass('footer', 'icpLink')"
+          >
+          <p v-if="getFieldError('footer', 'icpLink')" class="text-xs text-rose-500 dark:text-rose-300">
+            {{ getFieldError('footer', 'icpLink') }}
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-6 space-y-2">
+        <label for="footer-note" class="text-sm font-bold text-slate-900 dark:text-white">补充说明</label>
+        <textarea
+          id="footer-note"
+          v-model="form.footer.note"
+          rows="4"
+          maxlength="140"
+          placeholder="例如：保存后首页侧栏、导航与全站页脚会同步更新。"
+          class="w-full rounded-2xl border bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-900 outline-none transition-all focus:border-brand-600 focus:ring-4 focus:ring-brand-500/5 dark:bg-slate-950 dark:text-slate-100"
+          :class="getInputClass('footer', 'note')"
+        />
+        <div class="flex items-center justify-between gap-3 text-xs">
+          <span class="text-slate-400">该内容会显示在页脚备案信息下方。</span>
+          <span :class="getFieldError('footer', 'note') ? 'text-rose-500 dark:text-rose-300' : 'text-slate-400'">
+            {{ form.footer.note.trim().length }}/140
+          </span>
+        </div>
+        <p v-if="getFieldError('footer', 'note')" class="text-xs text-rose-500 dark:text-rose-300">
+          {{ getFieldError('footer', 'note') }}
+        </p>
+      </div>
+      </section>
+    </div>
+
+    <section class="admin-theme-card flex flex-col gap-4 rounded-[2rem] p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div class="space-y-1">
+        <p class="text-sm font-bold text-slate-900 dark:text-white">
+          {{ saveStateMeta.label }}
+        </p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">
+          {{ bottomStatusText }}
+        </p>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2">
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+          :disabled="isActionDisabled"
+          @click="resetForm"
+        >
+          <RotateCcw :size="16" />
+          重置本页
+        </button>
+        <button
+          type="button"
+          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
+          :disabled="isActionDisabled"
+          @click="saveSettings"
+        >
+          <LoaderCircle v-if="saveState === 'saving'" :size="16" class="animate-spin" />
+          <Save v-else :size="16" />
+          {{ saveState === 'saving' ? '保存中...' : '保存修改' }}
+        </button>
+      </div>
+    </section>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import {
-    AlertCircle,
-    ArrowDown,
-    ArrowUp,
-    Globe2,
-    ImagePlus,
-    Link2,
-    LoaderCircle,
-    Mail,
-    Plus,
-    RotateCcw,
-    Save,
-    Share2,
-    ShieldCheck,
-    Trash2,
-    Upload,
-    UserRound,
-} from 'lucide-vue-next';
+  AlertCircle,
+  ArrowDown,
+  ArrowUp,
+  Globe2,
+  ImagePlus,
+  Link2,
+  LoaderCircle,
+  Mail,
+  Plus,
+  RotateCcw,
+  Save,
+  Share2,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  UserRound,
+} from '~/utils/admin-lucide-icons';
 import { cloneSiteSettings } from '~/constants/site-settings';
 import { validateSecuritySettingsForm } from '~/utils/security-form';
 import { useAppToast } from '~/composables/useAppToast';
 import { useSiteSettings } from '~/composables/useSiteSettings';
-import type { AdminSettingsForm, AdminSettingsSaveState, SiteSocialIcon } from '~/types/admin-settings';
+import type {
+  AdminSettingsForm,
+  AdminSettingsSaveState,
+  SiteSocialIcon,
+} from '~/types/admin-settings';
 import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
@@ -1313,10 +1628,10 @@ definePageMeta({
 });
 
 interface SettingsFieldErrors {
-    site: Partial<Record<keyof AdminSettingsForm['site'], string>>;
-    owner: Partial<Record<keyof AdminSettingsForm['owner'], string>>;
-    footer: Partial<Record<keyof AdminSettingsForm['footer'], string>>;
-    security: Record<string, string>;
+  site: Partial<Record<keyof AdminSettingsForm['site'], string>>;
+  owner: Partial<Record<keyof AdminSettingsForm['owner'], string>>;
+  footer: Partial<Record<keyof AdminSettingsForm['footer'], string>>;
+  security: Record<string, string>;
 }
 
 const availableSocialIcons = [
@@ -1367,11 +1682,11 @@ const currentTabDescription = computed(() => {
         return '维护顶部导航项的名称、顺序、地址与打开方式。';
     }
 
-    if (activeTab.value === 'security') {
-        return '维护登录、评论、留言、友链申请与点赞接口的安全策略。';
-    }
+  if (activeTab.value === 'security') {
+    return '维护登录、评论、留言、友链申请与点赞接口的安全策略。';
+  }
 
-    return '维护联系邮箱、版权文案、备案信息与补充说明。';
+  return '维护联系邮箱、版权文案、备案信息与补充说明。';
 });
 
 const saveStateMeta = computed(() => {
@@ -1415,6 +1730,24 @@ const hasUnsavedChanges = computed(() => JSON.stringify(form.value) !== JSON.str
 const isActionDisabled = computed(() => saveState.value === 'saving' || !hasUnsavedChanges.value);
 
 const bottomStatusText = computed(() => {
+  if (saveState.value === 'saving') {
+    return '页面正在写入当前修改，请稍候。';
+  }
+
+  if (saveState.value === 'dirty') {
+    return '存在尚未保存的修改，保存后会同步站点配置。';
+  }
+
+  if (saveState.value === 'error') {
+    return '表单中仍有需要修正的内容。';
+  }
+
+  return '当前页面内容与最近一次保存结果一致。';
+});
+
+watch(
+  form,
+  () => {
     if (saveState.value === 'saving') {
         return '页面正在写入当前修改，请稍候。';
     }
@@ -1449,12 +1782,12 @@ watch(
 );
 
 function createEmptyFieldErrors(): SettingsFieldErrors {
-    return {
-        site: {},
-        owner: {},
-        footer: {},
-        security: {},
-    };
+  return {
+    site: {},
+    owner: {},
+    footer: {},
+    security: {},
+  };
 }
 
 function getFieldError(group: keyof SettingsFieldErrors, field: string) {
@@ -1462,9 +1795,9 @@ function getFieldError(group: keyof SettingsFieldErrors, field: string) {
 }
 
 function getInputClass(group: keyof SettingsFieldErrors, field: string) {
-    return getFieldError(group, field)
-        ? 'border-rose-300 focus:border-rose-500 dark:border-rose-800'
-        : 'border-slate-200 dark:border-slate-800';
+  return getFieldError(group, field)
+    ? 'border-rose-300 focus:border-rose-500 dark:border-rose-800'
+    : 'border-slate-200/80 dark:border-slate-700/80';
 }
 
 function isValidUrl(value: string) {
@@ -1531,10 +1864,10 @@ function validateForm() {
         nextErrors.footer.note = '补充说明需控制在 140 个字符以内';
     }
 
-    nextErrors.security = validateSecuritySettingsForm(form.value.security);
+  nextErrors.security = validateSecuritySettingsForm(form.value.security);
 
-    fieldErrors.value = nextErrors;
-    return Object.values(nextErrors).every((group) => Object.keys(group).length === 0);
+  fieldErrors.value = nextErrors;
+  return Object.values(nextErrors).every((group) => Object.keys(group).length === 0);
 }
 
 function normalizeSocialLinks() {
@@ -1578,16 +1911,16 @@ function moveSocialLink(id: string, direction: 'up' | 'down') {
         return;
     }
 
-    const nextLinks = [...form.value.socialLinks];
-    const currentItem = nextLinks[currentIndex];
-    if (!currentItem) {
-        return;
-    }
+  const nextLinks = [...form.value.socialLinks];
+  const currentItem = nextLinks[currentIndex];
+  if (!currentItem) {
+    return;
+  }
 
-    nextLinks.splice(currentIndex, 1);
-    nextLinks.splice(targetIndex, 0, currentItem);
-    form.value.socialLinks = nextLinks;
-    normalizeSocialLinks();
+  nextLinks.splice(currentIndex, 1);
+  nextLinks.splice(targetIndex, 0, currentItem);
+  form.value.socialLinks = nextLinks;
+  normalizeSocialLinks();
 }
 
 function addNavItem() {
@@ -1617,16 +1950,16 @@ function moveNavItem(id: string, direction: 'up' | 'down') {
         return;
     }
 
-    const nextItems = [...form.value.navItems];
-    const currentItem = nextItems[currentIndex];
-    if (!currentItem) {
-        return;
-    }
+  const nextItems = [...form.value.navItems];
+  const currentItem = nextItems[currentIndex];
+  if (!currentItem) {
+    return;
+  }
 
-    nextItems.splice(currentIndex, 1);
-    nextItems.splice(targetIndex, 0, currentItem);
-    form.value.navItems = nextItems;
-    normalizeNavItems();
+  nextItems.splice(currentIndex, 1);
+  nextItems.splice(targetIndex, 0, currentItem);
+  form.value.navItems = nextItems;
+  normalizeNavItems();
 }
 
 function clearObjectUrl(target: 'siteLogo' | 'ownerAvatar') {
@@ -1672,28 +2005,29 @@ async function saveSettings() {
         return;
     }
 
-    saveState.value = 'saving';
-    try {
-        const savedSettings = await $fetch<AdminSettingsForm>('/api/admin/site-settings', {
-            method: 'PUT',
-            body: cloneSiteSettings(form.value),
-        });
-        const nextSettings = cloneSiteSettings(savedSettings);
-        settings.value = nextSettings;
-        savedSnapshot.value = cloneSiteSettings(nextSettings);
-        siteLogoPreviewUrl.value = nextSettings.site.logoUrl;
-        ownerAvatarPreviewUrl.value = nextSettings.owner.avatarUrl;
-        saveState.value = 'saved';
-        feedbackTone.value = 'success';
-        feedbackMessage.value = '设置已保存';
-        addToast('设置已保存', 'success');
-    } catch (error) {
-        const message = resolveRequestErrorMessage(error, '设置保存失败');
-        saveState.value = 'error';
-        feedbackTone.value = 'error';
-        feedbackMessage.value = message;
-        addToast(message, 'error');
-    }
+  saveState.value = 'saving';
+  try {
+    const savedSettings = await $fetch<AdminSettingsForm>('/api/admin/site-settings', {
+      method: 'PUT',
+      body: cloneSiteSettings(form.value),
+    });
+    const nextSettings = cloneSiteSettings(savedSettings);
+    settings.value = nextSettings;
+    savedSnapshot.value = cloneSiteSettings(nextSettings);
+    siteLogoPreviewUrl.value = nextSettings.site.logoUrl;
+    ownerAvatarPreviewUrl.value = nextSettings.owner.avatarUrl;
+    saveState.value = 'saved';
+    feedbackTone.value = 'success';
+    feedbackMessage.value = '设置已保存';
+    addToast('设置已保存', 'success');
+  }
+  catch (error) {
+    const message = resolveRequestErrorMessage(error, '设置保存失败');
+    saveState.value = 'error';
+    feedbackTone.value = 'error';
+    feedbackMessage.value = message;
+    addToast(message, 'error');
+  }
 }
 
 function handleImageUpload(event: Event, target: 'siteLogo' | 'ownerAvatar') {

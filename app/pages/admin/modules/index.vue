@@ -1,12 +1,12 @@
 <template>
   <div class="space-y-8 pb-20">
-    <section class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <UCard :ui="{ root: 'admin-theme-card rounded-[2rem] border-slate-200 dark:border-slate-800', body: 'p-5 sm:p-6' }">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div class="space-y-3">
           <div class="flex flex-wrap items-center gap-3">
             <h1 class="font-serif text-3xl font-black tracking-tight text-slate-900 dark:text-white">模块插件</h1>
             <span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200">
-              <Package :size="14" />
+              <UIcon name="i-lucide-package" class="size-4" />
               共 {{ modules.length }} 个模块
             </span>
           </div>
@@ -20,38 +20,39 @@
               ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200'
               : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200'"
           >
-            <AlertCircle v-if="feedbackTone === 'error'" :size="16" class="mt-0.5 shrink-0" />
-            <ShieldCheck v-else :size="16" class="mt-0.5 shrink-0" />
+            <UIcon v-if="feedbackTone === 'error'" name="i-lucide-alert-circle" class="mt-0.5 size-4 shrink-0" />
+            <UIcon v-else name="i-lucide-shield-check" class="mt-0.5 size-4 shrink-0" />
             <span>{{ feedbackMessage }}</span>
           </div>
         </div>
 
-        <button
-          type="button"
-          class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+        <UButton
+          color="neutral"
+          variant="soft"
+          :loading="loadState === 'loading'"
           :disabled="loadState === 'loading'"
+          :icon="loadState === 'loading' ? undefined : 'i-lucide-refresh-cw'"
+          class="justify-center"
           @click="fetchModules"
         >
-          <LoaderCircle v-if="loadState === 'loading'" :size="16" class="animate-spin" />
-          <RefreshCw v-else :size="16" />
           刷新模块状态
-        </button>
+        </UButton>
       </div>
-    </section>
+    </UCard>
 
-    <section
+    <UCard
       v-if="loadState === 'loading'"
-      class="flex min-h-[18rem] items-center justify-center rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      :ui="{ root: 'admin-theme-card rounded-[2rem] border-slate-200 dark:border-slate-800', body: 'flex min-h-[18rem] items-center justify-center p-6' }"
     >
       <div class="inline-flex items-center gap-3 text-sm font-bold text-slate-500 dark:text-slate-300">
-        <LoaderCircle :size="18" class="animate-spin" />
+        <UIcon name="i-lucide-loader-circle" class="size-5 animate-spin" />
         正在读取模块列表...
       </div>
-    </section>
+    </UCard>
 
-    <section
+    <UCard
       v-else-if="loadState === 'error'"
-      class="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 shadow-sm dark:border-rose-900/50 dark:bg-rose-950/20"
+      :ui="{ root: 'admin-theme-card rounded-[2rem] border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/20', body: 'p-6' }"
     >
       <div class="flex items-start gap-3 text-rose-700 dark:text-rose-200">
         <AlertCircle :size="18" class="mt-0.5 shrink-0" />
@@ -60,20 +61,20 @@
           <p class="text-sm leading-6">{{ errorMessage }}</p>
         </div>
       </div>
-    </section>
+    </UCard>
 
-    <section v-else class="grid justify-items-start gap-5 lg:grid-cols-2 2xl:grid-cols-3">
-      <article
+    <section v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <UCard
         v-for="moduleItem in modules"
         :key="moduleItem.key"
-        class="w-full max-w-[26rem] rounded-[1.5rem] border border-slate-100 bg-white p-4 sm:p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+        :ui="{ root: 'admin-theme-card w-full rounded-[2rem] border-slate-200 transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800', body: 'p-4 sm:p-5' }"
       >
         <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div class="space-y-3">
               <div class="flex flex-wrap items-center gap-3">
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-300">
-                  <Package :size="18" />
+                  <UIcon name="i-lucide-package" class="size-5" />
                 </div>
                 <div class="space-y-1">
                   <div class="flex flex-wrap items-center gap-2">
@@ -110,13 +111,15 @@
           </dl>
 
           <div class="flex flex-wrap gap-3">
-            <NuxtLink
+            <UButton
               :to="moduleItem.settingsPath || `/admin/modules/${moduleItem.key}`"
-              class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+              color="neutral"
+              variant="soft"
+              icon="i-lucide-settings-2"
+              class="justify-center"
             >
-              <Settings2 :size="16" />
               查看详情
-            </NuxtLink>
+            </UButton>
 
             <button
               v-if="!moduleItem.installed"
@@ -167,7 +170,7 @@
             </button>
           </div>
         </div>
-      </article>
+      </UCard>
     </section>
   </div>
 </template>
@@ -185,7 +188,7 @@ import {
   Settings2,
   ShieldCheck,
   Trash2,
-} from 'lucide-vue-next';
+} from '~/utils/admin-lucide-icons';
 import { useAppToast } from '~/composables/useAppToast';
 import { resolveRequestErrorMessage } from '~/utils/request-error';
 import type { AdminModuleSummary } from '~~/shared/types/module-center';
