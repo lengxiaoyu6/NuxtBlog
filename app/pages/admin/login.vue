@@ -92,12 +92,11 @@ const form = reactive({
 });
 
 const route = useRoute();
-const { user: userSession, fetch: fetchUserSession } = useUserSession();
+const { fetch: fetchUserSession } = useUserSession();
 const loading = ref(false);
 const loginError = ref('');
 const turnstileToken = ref('');
 const captchaResetNonce = ref(0);
-const sessionUser = computed(() => userSession.value as AdminSessionUser | null | undefined);
 const loginCaptchaEnabled = computed(() => isCaptchaRequired('login', securityConfig.value));
 
 const redirectPath = computed(() => {
@@ -125,7 +124,7 @@ async function handleLogin() {
   loading.value = true;
 
   try {
-    await $fetch('/api/auth/login', {
+    const loginResult = await $fetch<{ ok: boolean; user: AdminSessionUser }>('/api/auth/login', {
       method: 'POST',
       body: {
         username: form.username,
@@ -136,7 +135,7 @@ async function handleLogin() {
 
     await fetchUserSession();
 
-    if (sessionUser.value?.mustChangePassword) {
+    if (loginResult.user.mustChangePassword) {
       await navigateTo('/admin/password-setup');
       return;
     }

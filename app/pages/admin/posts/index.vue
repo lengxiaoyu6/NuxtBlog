@@ -224,20 +224,6 @@ import { useAppToast } from '~/composables/useAppToast';
 import { listPostCategories } from '~/services/admin-post-category';
 import type { AdminPostCategoryItem } from '~/types/admin-post-category';
 import type { AdminPostListItem, AdminPostListResponse } from '~/types/post';
-import {
-    Plus,
-    Search,
-    Edit3,
-    Trash2,
-    ExternalLink,
-    MessageSquare,
-    Heart,
-    Eye,
-    Layers,
-    Image as ImageIcon,
-    CheckCircle,
-    FileX,
-} from 'lucide-vue-next';
 import { resolveRequestErrorMessage } from '~/utils/request-error';
 
 definePageMeta({
