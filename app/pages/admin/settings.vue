@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-8 pb-20">
-    <section class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <UCard :ui="{ root: 'admin-theme-card rounded-[2rem] border-slate-200/80 dark:border-slate-700/80', body: 'p-5 sm:p-6' }">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div class="space-y-3">
           <div class="flex flex-wrap items-center gap-3">
@@ -23,37 +23,37 @@
               ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200'
               : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-200'"
           >
-            <AlertCircle v-if="feedbackTone === 'error'" :size="16" class="mt-0.5 shrink-0" />
-            <ShieldCheck v-else :size="16" class="mt-0.5 shrink-0" />
+            <UIcon v-if="feedbackTone === 'error'" name="i-lucide-alert-circle" class="mt-0.5 size-4 shrink-0" />
+            <UIcon v-else name="i-lucide-shield-check" class="mt-0.5 size-4 shrink-0" />
             <span>{{ feedbackMessage }}</span>
           </div>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:w-[22rem]">
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800"
+          <UButton
+            color="neutral"
+            variant="soft"
+            icon="i-lucide-rotate-ccw"
+            class="justify-center"
             :disabled="isActionDisabled"
             @click="resetForm"
           >
-            <RotateCcw :size="16" />
             重置本页
-          </button>
-          <button
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
+          </UButton>
+          <UButton
+            icon="i-lucide-save"
+            class="justify-center"
+            :loading="saveState === 'saving'"
             :disabled="isActionDisabled"
             @click="saveSettings"
           >
-            <LoaderCircle v-if="saveState === 'saving'" :size="16" class="animate-spin" />
-            <Save v-else :size="16" />
             {{ saveState === 'saving' ? '保存中...' : '保存修改' }}
-          </button>
+          </UButton>
         </div>
       </div>
-    </section>
+    </UCard>
 
-    <div class="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 p-2 dark:border-slate-800 dark:bg-slate-900/40">
+    <div class="admin-theme-card flex flex-wrap items-center gap-3 rounded-2xl p-2">
       <button
         type="button"
         class="inline-flex items-center rounded-xl px-4 py-2 text-sm font-bold transition-all"
@@ -133,7 +133,7 @@
     </div>
 
     <div v-if="activeTab === 'site'" class="space-y-8">
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
           <Globe2 :size="22" />
@@ -201,7 +201,7 @@
           </div>
         </div>
 
-        <div class="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-950/40">
+        <div class="admin-theme-card rounded-[2rem] border-dashed p-5">
           <div class="flex items-center gap-3">
             <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-300">
               <ImagePlus :size="20" />
@@ -248,7 +248,7 @@
     </div>
 
     <div v-else-if="activeTab === 'owner'" class="space-y-8">
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
           <UserRound :size="22" />
@@ -335,7 +335,7 @@
           </div>
         </div>
 
-        <div class="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50/80 p-5 dark:border-slate-700 dark:bg-slate-950/40">
+        <div class="admin-theme-card rounded-[2rem] border-dashed p-5">
           <div class="flex items-center gap-3">
             <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-slate-500 shadow-sm dark:bg-slate-900 dark:text-slate-300">
               <ImagePlus :size="20" />
@@ -382,7 +382,7 @@
     </div>
 
     <div v-else-if="activeTab === 'socialLinks'" class="space-y-8">
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300">
           <Share2 :size="22" />
@@ -481,7 +481,7 @@
     </div>
 
     <div v-else-if="activeTab === 'navItems'" class="space-y-8">
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300">
           <Link2 :size="22" />
@@ -578,7 +578,35 @@
     </div>
 
     <div v-else-if="activeTab === 'security'" class="space-y-8">
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <UCard :ui="{ root: 'admin-theme-card rounded-[2rem] border-slate-200/80 dark:border-slate-700/80', body: 'p-5 sm:p-6' }">
+        <template #header>
+          <div class="flex items-center gap-3">
+            <div class="grid size-10 place-items-center rounded-2xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-300">
+              <UIcon name="i-lucide-sliders-horizontal" class="size-5" />
+            </div>
+            <div>
+              <h2 class="text-lg font-black text-slate-900 dark:text-white">配置概览</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">常用开关集中显示，可与下方完整配置保持同步。</p>
+            </div>
+          </div>
+        </template>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <UFormField label="登录人机校验">
+            <USwitch v-model="form.security.login.captchaEnabled" label="开启" />
+          </UFormField>
+          <UFormField label="评论人机校验">
+            <USwitch v-model="form.security.comments.captchaEnabled" label="开启" />
+          </UFormField>
+          <UFormField label="留言人机校验">
+            <USwitch v-model="form.security.guestbook.captchaEnabled" label="开启" />
+          </UFormField>
+          <UFormField label="友链人机校验">
+            <USwitch v-model="form.security.linkApplications.captchaEnabled" label="开启" />
+          </UFormField>
+        </div>
+      </UCard>
+
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
         <div class="mb-6 flex items-center gap-3">
           <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/30 dark:text-brand-300">
             <ShieldCheck :size="22" />
@@ -606,7 +634,7 @@
         </div>
       </section>
 
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
         <div class="mb-6 flex items-center gap-3">
           <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
             <ShieldCheck :size="22" />
@@ -654,7 +682,7 @@
       </section>
 
       <section class="grid gap-6 xl:grid-cols-2">
-        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
           <div class="mb-6 flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300">
               <ShieldCheck :size="22" />
@@ -691,7 +719,7 @@
           </div>
         </article>
 
-        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
           <div class="mb-6 flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300">
               <ShieldCheck :size="22" />
@@ -728,7 +756,7 @@
           </div>
         </article>
 
-        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
           <div class="mb-6 flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300">
               <ShieldCheck :size="22" />
@@ -765,7 +793,7 @@
           </div>
         </article>
 
-        <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <article class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
           <div class="mb-6 flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300">
               <ShieldCheck :size="22" />
@@ -799,7 +827,7 @@
 
 
     <div v-else-if="activeTab === 'footer'" class="space-y-8">
-      <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+      <section class="admin-theme-card rounded-[2.5rem] p-6 sm:p-8">
       <div class="mb-6 flex items-center gap-3">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300">
           <Mail :size="22" />
@@ -898,7 +926,7 @@
       </section>
     </div>
 
-    <section class="flex flex-col gap-4 rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+    <section class="admin-theme-card flex flex-col gap-4 rounded-[2rem] p-5 sm:flex-row sm:items-center sm:justify-between">
       <div class="space-y-1">
         <p class="text-sm font-bold text-slate-900 dark:text-white">
           {{ saveStateMeta.label }}
@@ -952,7 +980,7 @@ import {
   Trash2,
   Upload,
   UserRound,
-} from 'lucide-vue-next';
+} from '~/utils/admin-lucide-icons';
 import { cloneSiteSettings } from '~/constants/site-settings';
 import { validateSecuritySettingsForm } from '~/utils/security-form';
 import { useAppToast } from '~/composables/useAppToast';
@@ -1116,7 +1144,7 @@ function getFieldError(group: keyof SettingsFieldErrors, field: string) {
 function getInputClass(group: keyof SettingsFieldErrors, field: string) {
   return getFieldError(group, field)
     ? 'border-rose-300 focus:border-rose-500 dark:border-rose-800'
-    : 'border-slate-200 dark:border-slate-800';
+    : 'border-slate-200/80 dark:border-slate-700/80';
 }
 
 function isValidUrl(value: string) {

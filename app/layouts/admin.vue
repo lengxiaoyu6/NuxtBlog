@@ -1,100 +1,134 @@
 <template>
-  <div class="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans flex text-slate-900 dark:text-slate-100">
-    <!-- Overlay for mobile sidebar -->
+  <div class="admin-theme-shell relative min-h-screen overflow-hidden text-slate-950 antialiased dark:text-white">
+    <div class="pointer-events-none absolute inset-0 bg-noise" />
+    <div class="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_68%)] dark:bg-[radial-gradient(circle_at_top,_rgba(37,99,235,0.22),_transparent_70%)]" />
+
     <Transition
-      enter-active-class="transition duration-300 ease-out"
+      enter-active-class="transition-opacity duration-200"
       enter-from-class="opacity-0"
       enter-to-class="opacity-100"
-      leave-active-class="transition duration-200 ease-in"
+      leave-active-class="transition-opacity duration-150"
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div 
-        v-if="isSidebarOpen" 
+      <div
+        v-if="isSidebarOpen"
+        class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm lg:hidden"
         @click="isSidebarOpen = false"
-        class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"
       />
     </Transition>
 
-    <!-- Sidebar -->
-    <aside 
-      class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col fixed inset-y-0 z-[70] transition-transform duration-300 lg:translate-x-0"
-      :class="isSidebarOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'"
+    <aside
+      class="admin-theme-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col transition-transform duration-300 lg:translate-x-0 lg:shadow-none"
+      :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+      aria-label="后台导航"
     >
-      <div class="p-6 flex items-center justify-between">
-        <NuxtLink to="/" class="flex items-center gap-3 group">
-          <div class="p-2 bg-brand-600 rounded-xl shadow-lg shadow-brand-500/20 group-hover:scale-110 transition-transform">
-            <LayoutDashboard class="text-white" :size="20" />
+      <div class="flex h-20 items-center justify-between px-5">
+        <NuxtLink to="/" class="flex min-w-0 items-center gap-3">
+          <div class="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-500/30">
+            <UIcon name="i-lucide-feather" class="size-5" />
           </div>
-          <span class="font-black text-xl font-serif tracking-tight">{{ siteTitle }}</span>
+          <div class="min-w-0">
+            <p class="truncate text-base font-black tracking-tight text-slate-950 dark:text-white">{{ siteTitle }}</p>
+            <p class="truncate text-xs text-slate-500 dark:text-slate-400">博客内容管理后台</p>
+          </div>
         </NuxtLink>
-        <button @click="isSidebarOpen = false" class="lg:hidden p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white">
-          <X :size="20" />
-        </button>
+        <UButton
+          icon="i-lucide-x"
+          color="neutral"
+          variant="ghost"
+          class="lg:hidden"
+          aria-label="关闭导航"
+          @click="isSidebarOpen = false"
+        />
       </div>
 
-      <nav class="flex-grow px-4 mt-4 overflow-y-auto">
-        <section
-          v-for="group in navGroups"
-          :key="group.label"
-          class="mb-6 space-y-1"
-        >
-          <p class="px-4 pb-2 text-[11px] font-black uppercase tracking-[0.24em] text-slate-400">
+      <div class="flex-1 space-y-6 overflow-y-auto px-4 pb-6">
+        <section v-for="group in adminNavGroups" :key="group.label" class="space-y-2">
+          <p class="px-3 text-[11px] font-bold uppercase tracking-[0.22em] text-slate-400 dark:text-slate-500">
             {{ group.label }}
           </p>
-          <NuxtLink
-            v-for="item in group.items"
-            :key="item.path"
-            :to="item.path"
-            @click="isSidebarOpen = false"
-            class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all group"
-            :class="[
-              isCurrentPath(item.path)
-                ? 'bg-brand-50 dark:bg-brand-900/20 text-brand-600'
-                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
-            ]"
-          >
-            <component :is="item.icon" :size="20" :class="isCurrentPath(item.path) ? 'text-brand-600' : 'group-hover:text-slate-900 dark:group-hover:text-white'" />
-            <span class="text-sm font-bold">{{ item.label }}</span>
-          </NuxtLink>
+          <nav class="space-y-1">
+            <NuxtLink
+              v-for="item in group.items"
+              :key="item.to"
+              :to="item.to"
+              class="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-semibold transition-all"
+              :class="isCurrentPath(item.to)
+                ? 'bg-brand-600 text-white shadow-lg shadow-brand-500/25'
+                : 'text-slate-600 hover:bg-white/70 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900/70 dark:hover:text-white'"
+              @click="isSidebarOpen = false"
+            >
+              <UIcon :name="item.icon" class="size-5 shrink-0" />
+              <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
+            </NuxtLink>
+          </nav>
         </section>
-      </nav>
+      </div>
 
-      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
-        <button
-          :disabled="isLoggingOut"
-          class="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all font-bold text-sm disabled:cursor-not-allowed disabled:opacity-70"
-          @click="handleLogout"
-        >
-          <LogOut :size="20" />
-          {{ isLoggingOut ? '退出中...' : '退出登录' }}
-        </button>
+      <div class="border-t border-white/60 p-4 dark:border-slate-800/70">
+        <div class="admin-theme-card rounded-[1.75rem] p-4">
+          <div class="mb-3 flex items-center gap-3">
+            <UAvatar alt="Admin" size="md" icon="i-lucide-user" />
+            <div class="min-w-0">
+              <p class="truncate text-sm font-bold text-slate-950 dark:text-white">{{ adminDisplayName }}</p>
+              <p class="truncate text-xs text-slate-500 dark:text-slate-400">Administrator</p>
+            </div>
+          </div>
+          <UButton
+            block
+            color="neutral"
+            variant="soft"
+            :loading="isLoggingOut"
+            icon="i-lucide-log-out"
+            @click="handleLogout"
+          >
+            {{ isLoggingOut ? '退出中...' : '退出登录' }}
+          </UButton>
+        </div>
       </div>
     </aside>
 
-    <!-- Main Content -->
-    <div class="flex-grow min-h-screen flex flex-col transition-all duration-300" :class="{'lg:ml-64': true}">
-      <header class="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 px-4 sm:px-8 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <button @click="isSidebarOpen = true" class="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
-            <Menu :size="24" />
-          </button>
-          <h1 class="font-bold text-lg hidden sm:block">{{ currentNavLabel }}</h1>
-        </div>
-        
-        <div class="flex items-center gap-4">
-          <button class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
-            <Bell :size="20" />
-          </button>
-          <div class="h-8 w-px bg-slate-200 dark:bg-slate-800" />
-          <div class="flex items-center gap-3">
-            <img src="https://picsum.photos/seed/admin/100/100" class="w-8 h-8 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" />
-            <span class="text-sm font-bold hidden sm:inline-block">{{ adminDisplayName }}</span>
+    <div class="relative lg:pl-72">
+      <header class="admin-theme-header sticky top-0 z-30">
+        <div class="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
+          <UButton
+            icon="i-lucide-menu"
+            color="neutral"
+            variant="ghost"
+            class="lg:hidden"
+            aria-label="打开导航"
+            @click="isSidebarOpen = true"
+          />
+
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm text-slate-500 dark:text-slate-400">{{ currentNavGroup }}</p>
+            <h1 class="truncate text-base font-black text-slate-950 sm:text-lg dark:text-white">{{ currentPageTitle }}</h1>
           </div>
+
+          <div class="hidden min-w-0 flex-1 items-center justify-end md:flex">
+            <UInput
+              v-model="keyword"
+              icon="i-lucide-search"
+              placeholder="搜索文章、评论、媒体资源"
+              class="w-full max-w-sm"
+              size="lg"
+            />
+          </div>
+
+          <UButton icon="i-lucide-bell" color="neutral" variant="ghost" aria-label="通知" />
+          <UButton
+            :icon="isDark ? 'i-lucide-sun' : 'i-lucide-moon'"
+            color="neutral"
+            variant="ghost"
+            aria-label="切换主题"
+            @click="toggleTheme"
+          />
+          <UAvatar alt="Admin" icon="i-lucide-user" size="sm" class="hidden sm:inline-flex" />
         </div>
       </header>
 
-      <main class="p-4 sm:p-8 flex-grow overflow-x-hidden">
+      <main class="relative mx-auto w-full max-w-[1680px] space-y-6 px-4 py-6 sm:px-5 sm:py-8 lg:px-8 2xl:px-10">
         <slot />
       </main>
     </div>
@@ -103,62 +137,21 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { adminNavGroups, adminNavItems, type AdminNavItem } from '~/constants/admin-navigation';
 import { DEFAULT_SITE_SETTINGS } from '~/constants/site-settings';
 import type { AdminSessionUser } from '~~/shared/types/auth';
-import { 
-  LayoutDashboard, 
-  FileText, 
-  MessageSquare, 
-  Image as ImageIcon, 
-  FolderTree,
-  FolderKanban,
-  Link2,
-  MessageCircleMore,
-  Settings, 
-  Package,
-  LogOut,
-  Bell,
-  Menu,
-  UserRound,
-  X
-} from 'lucide-vue-next';
 
 const route = useRoute();
 const { settings, fetchSiteSettings } = useSiteSettings();
 const { user, fetch: fetchUserSession } = useUserSession();
 const isSidebarOpen = ref(false);
 const isLoggingOut = ref(false);
+const keyword = ref('');
+const colorMode = useColorMode();
 
 await fetchSiteSettings({ admin: true });
 
-const navGroups = [
-  {
-    label: '内容管理',
-    items: [
-      { label: '仪表盘', path: '/admin', icon: LayoutDashboard },
-      { label: '文章管理', path: '/admin/posts', icon: FileText },
-      { label: '文章分类', path: '/admin/categories', icon: FolderTree },
-      { label: '评论管理', path: '/admin/comments', icon: MessageSquare },
-      { label: '媒体库', path: '/admin/media', icon: ImageIcon },
-    ],
-  },
-  {
-    label: '页面管理',
-    items: [
-      { label: '关于我', path: '/admin/pages/about', icon: UserRound },
-      { label: '留言板', path: '/admin/pages/guestbook', icon: MessageCircleMore },
-      { label: '友情链接', path: '/admin/pages/links', icon: Link2 },
-      { label: '项目展示', path: '/admin/pages/projects', icon: FolderKanban },
-    ],
-  },
-  {
-    label: '系统配置',
-    items: [
-      { label: '系统设置', path: '/admin/settings', icon: Settings },
-      { label: '模块插件', path: '/admin/modules', icon: Package },
-    ],
-  },
-];
+const isDark = computed(() => colorMode.value === 'dark');
 
 function isCurrentPath(path: string) {
   if (route.path === path) {
@@ -169,13 +162,12 @@ function isCurrentPath(path: string) {
     return true;
   }
 
-  return false;
+  const item = adminNavItems.find((navItem) => navItem.to === path) as AdminNavItem | undefined;
+  return item?.match?.some((matcher) => matcher.endsWith('/') ? route.path.startsWith(matcher) : route.path === matcher) ?? false;
 }
 
-const currentNavLabel = computed(() => {
-  return navGroups
-    .flatMap((group) => group.items)
-    .find((item) => isCurrentPath(item.path))?.label || '管理后台';
+const currentNavItem = computed(() => {
+  return adminNavItems.find((item) => isCurrentPath(item.to)) ?? adminNavItems[0];
 });
 
 const siteTitle = computed(() => settings.value.site.name.trim() || DEFAULT_SITE_SETTINGS.site.name);
@@ -186,12 +178,17 @@ const currentPageTitle = computed(() => {
       : '新建文章';
   }
 
-  return currentNavLabel.value;
+  return currentNavItem.value?.label || '管理后台';
 });
+const currentNavGroup = computed(() => currentNavItem.value?.group || '后台首页');
 const sessionUser = computed(() => user.value as AdminSessionUser | null | undefined);
 const adminDisplayName = computed(() => sessionUser.value?.displayName || '管理员');
 
 useSitePageTitle(currentPageTitle);
+
+function toggleTheme() {
+  colorMode.preference = isDark.value ? 'light' : 'dark';
+}
 
 async function handleLogout() {
   if (isLoggingOut.value) {

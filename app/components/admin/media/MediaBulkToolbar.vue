@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-3 rounded-[2rem] border border-brand-100 bg-brand-50/70 p-4 shadow-sm dark:border-brand-900/40 dark:bg-brand-900/10 lg:flex-row lg:items-center lg:justify-between">
+  <div class="admin-theme-card flex flex-col gap-3 rounded-[2rem] border border-brand-100 bg-brand-50/70 p-4 shadow-sm dark:border-brand-900/40 dark:bg-brand-900/10 lg:flex-row lg:items-center lg:justify-between">
     <div class="flex items-center gap-3">
       <span class="inline-flex h-10 items-center rounded-xl bg-white px-4 text-sm font-bold text-brand-700 shadow-sm dark:bg-slate-900 dark:text-brand-200">
         已选 {{ selectedCount }} 项
@@ -46,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { FolderInput, Tags, Trash2 } from 'lucide-vue-next';
+import { FolderInput, Tags, Trash2 } from '~/utils/admin-lucide-icons';
 
 defineProps<{
   selectedCount: number;

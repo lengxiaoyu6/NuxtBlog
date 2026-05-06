@@ -19,7 +19,7 @@
         <article
           v-for="stat in stats"
           :key="stat.id"
-          class="rounded-[1.5rem] border border-slate-100 bg-white px-3 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-4"
+          class="admin-theme-card rounded-[1.5rem] border border-slate-100 bg-white px-3 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-4"
         >
           <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div class="space-y-2">
@@ -65,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { Clock3, FileText, FolderKanban, FolderPlus, Image as ImageIcon, Upload } from 'lucide-vue-next';
+import { Clock3, FileText, FolderKanban, FolderPlus, Image as ImageIcon, Upload } from '~/utils/admin-lucide-icons';
 import type { MediaStat } from '~/types/admin-media';
 
 defineProps<{

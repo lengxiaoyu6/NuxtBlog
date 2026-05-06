@@ -93,6 +93,67 @@
     opacity: 0.03;
   }
 
+  .admin-theme-shell {
+    --admin-brand-50: #eff6ff;
+    --admin-brand-100: #dbeafe;
+    --admin-brand-200: #bfdbfe;
+    --admin-brand-300: #93c5fd;
+    --admin-brand-400: #60a5fa;
+    --admin-brand-500: #3b82f6;
+    --admin-brand-600: #2563eb;
+    --admin-brand-700: #1d4ed8;
+    --admin-brand-800: #1e40af;
+    --admin-brand-900: #1e3a8a;
+    --admin-brand-950: #172554;
+    --color-brand-50: var(--admin-brand-50);
+    --color-brand-100: var(--admin-brand-100);
+    --color-brand-200: var(--admin-brand-200);
+    --color-brand-300: var(--admin-brand-300);
+    --color-brand-400: var(--admin-brand-400);
+    --color-brand-500: var(--admin-brand-500);
+    --color-brand-600: var(--admin-brand-600);
+    --color-brand-700: var(--admin-brand-700);
+    --color-brand-800: var(--admin-brand-800);
+    --color-brand-900: var(--admin-brand-900);
+    --color-brand-950: var(--admin-brand-950);
+    --color-primary-50: var(--admin-brand-50);
+    --color-primary-100: var(--admin-brand-100);
+    --color-primary-200: var(--admin-brand-200);
+    --color-primary-300: var(--admin-brand-300);
+    --color-primary-400: var(--admin-brand-400);
+    --color-primary-500: var(--admin-brand-500);
+    --color-primary-600: var(--admin-brand-600);
+    --color-primary-700: var(--admin-brand-700);
+    --color-primary-800: var(--admin-brand-800);
+    --color-primary-900: var(--admin-brand-900);
+    --color-primary-950: var(--admin-brand-950);
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 28rem),
+      radial-gradient(circle at top right, rgba(14, 165, 233, 0.12), transparent 30rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(248, 250, 252, 0.98));
+    @apply bg-slate-50 text-slate-950;
+  }
+
+  .dark .admin-theme-shell {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.24), transparent 28rem),
+      radial-gradient(circle at top right, rgba(6, 182, 212, 0.18), transparent 30rem),
+      linear-gradient(180deg, rgba(2, 6, 23, 0.96), rgba(15, 23, 42, 0.98));
+    @apply bg-slate-950 text-slate-100;
+  }
+
+  .admin-theme-sidebar {
+    @apply border-r border-white/70 bg-white/74 shadow-2xl shadow-sky-950/10 backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/72;
+  }
+
+  .admin-theme-header {
+    @apply border-b border-white/70 bg-white/76 shadow-sm shadow-sky-950/5 backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/72;
+  }
+
+  .admin-theme-card {
+    @apply border border-white/70 bg-white/76 shadow-xl shadow-sky-950/5 backdrop-blur-2xl dark:border-slate-800/70 dark:bg-slate-950/72;
+  }
+
   .paper-texture {
     position: relative;
   }

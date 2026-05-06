@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+  <div class="admin-theme-card overflow-hidden rounded-[2rem] border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
     <div class="overflow-x-auto">
       <table class="min-w-[900px] w-full border-collapse text-left">
         <thead>

@@ -1,6 +1,6 @@
 <template>
   <aside class="space-y-5">
-    <section class="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section class="admin-theme-card rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <template v-if="asset">
         <div class="mb-4 flex items-center gap-2">
           <PanelRightOpen :size="18" class="text-brand-600" />
@@ -106,7 +106,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { FileText, PanelRightOpen, PencilLine, RefreshCcw, Trash2 } from 'lucide-vue-next';
+import { FileText, PanelRightOpen, PencilLine, RefreshCcw, Trash2 } from '~/utils/admin-lucide-icons';
 import type { MediaAsset, MediaFolder, MediaTag } from '~/types/admin-media';
 
 const props = defineProps<{

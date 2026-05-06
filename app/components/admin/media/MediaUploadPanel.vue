@@ -8,7 +8,7 @@
     leave-to-class="opacity-0"
   >
     <div v-if="open" class="fixed inset-0 z-[80] bg-slate-950/45 px-4 py-8 backdrop-blur-sm" @click.self="$emit('close')">
-      <div class="mx-auto max-w-3xl rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+      <div class="admin-theme-card mx-auto max-w-3xl rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
         <div class="flex items-center justify-between gap-4">
           <div>
             <h2 class="text-xl font-black text-slate-900 dark:text-white">上传资源</h2>
@@ -79,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { UploadCloud, X } from 'lucide-vue-next';
+import { UploadCloud, X } from '~/utils/admin-lucide-icons';
 import type { MediaUploadTask } from '~/types/admin-media';
 
 defineProps<{

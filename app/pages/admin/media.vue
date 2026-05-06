@@ -7,8 +7,30 @@
       @create-folder="media.isCreateFolderModalOpen.value = true"
     />
 
-    <section class="overflow-hidden rounded-[2.5rem] border border-slate-200/70 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-slate-950/40">
-      <div class="grid xl:grid-cols-[15rem_minmax(0,1fr)]">
+    <UCard :ui="{ root: 'admin-theme-card overflow-hidden rounded-[2rem] border-slate-200 dark:border-slate-800', body: 'p-0 sm:p-0', header: 'p-5 sm:p-6' }">
+      <template #header>
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="flex items-start gap-3">
+            <div class="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary-50 text-primary-600 dark:bg-primary-950 dark:text-primary-300">
+              <UIcon name="i-lucide-image" class="size-5" />
+            </div>
+            <div>
+              <h1 class="text-xl font-black text-slate-900 dark:text-white">媒体库</h1>
+              <p class="text-sm text-slate-500 dark:text-slate-400">管理图片、封面与附件资源。</p>
+            </div>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <UButton color="neutral" variant="soft" icon="i-lucide-folder-plus" class="justify-center" @click="media.isCreateFolderModalOpen.value = true">
+              新建文件夹
+            </UButton>
+            <UButton icon="i-lucide-upload-cloud" class="justify-center" @click="media.isUploadPanelOpen.value = true">
+              上传资源
+            </UButton>
+          </div>
+        </div>
+      </template>
+
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-[16rem_minmax(0,1fr)]">
         <aside class="border-b border-slate-200/70 p-5 dark:border-slate-800 xl:border-b-0 xl:border-r">
           <MediaFolderSidebar
             :folders="media.visibleFolders.value"
@@ -70,9 +92,9 @@
 
               <div
                 v-if="media.filteredAssets.value.length === 0"
-                class="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                class="admin-theme-card flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-200 bg-white px-6 py-16 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900"
               >
-                <FolderSearch2 :size="28" class="text-slate-300 dark:text-slate-600" />
+                <UIcon name="i-lucide-folder-search-2" class="size-8 text-slate-300 dark:text-slate-600" />
                 <p class="mt-5 text-base font-bold text-slate-900 dark:text-white">当前筛选条件下没有匹配资源</p>
                 <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                   调整文件夹、标签、搜索词或资源类型后可重新查看列表。
@@ -81,7 +103,7 @@
 
               <div
                 v-else
-                class="flex flex-col gap-4 rounded-[1.75rem] border border-slate-200/70 bg-slate-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/60"
+                class="admin-theme-card flex flex-col gap-4 rounded-[1.75rem] border border-slate-200/70 bg-slate-50/70 px-4 py-4 dark:border-slate-800 dark:bg-slate-900/60"
               >
                 <p class="text-xs font-bold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500">
                   当前显示 {{ (media.currentPage.value - 1) * media.pageSize + 1 }} - {{ Math.min(media.currentPage.value * media.pageSize, media.totalFilteredAssets.value) }}
@@ -98,7 +120,7 @@
           </main>
         </div>
       </div>
-    </section>
+    </UCard>
 
     <MediaUploadPanel
       :open="media.isUploadPanelOpen.value"
@@ -127,7 +149,7 @@
         class="fixed inset-0 z-[85] bg-slate-950/40 px-4 py-8 backdrop-blur-sm"
         @click.self="media.isCreateFolderModalOpen.value = false"
       >
-        <div class="mx-auto max-w-md rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+        <div class="admin-theme-card mx-auto max-w-md rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
           <h2 class="text-xl font-black text-slate-900 dark:text-white">新建文件夹</h2>
           <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">输入新的归档目录名称，资源仍可通过标签跨目录检索。</p>
 
@@ -171,7 +193,7 @@
         class="fixed inset-0 z-[85] bg-slate-950/40 px-4 py-8 backdrop-blur-sm"
         @click.self="media.closeRenameFolder"
       >
-        <div class="mx-auto max-w-md rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+        <div class="admin-theme-card mx-auto max-w-md rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
           <h2 class="text-xl font-black text-slate-900 dark:text-white">重命名文件夹</h2>
           <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
             当前目录：{{ media.folderPendingRename.value?.name ?? '未选择目录' }}
@@ -217,7 +239,7 @@
         class="fixed inset-0 z-[85] bg-slate-950/40 px-4 py-8 backdrop-blur-sm"
         @click.self="media.closeDeleteFolder"
       >
-        <div class="mx-auto max-w-md rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+        <div class="admin-theme-card mx-auto max-w-md rounded-[2rem] border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
           <h2 class="text-xl font-black text-slate-900 dark:text-white">删除文件夹</h2>
           <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
             将尝试删除目录“{{ media.folderPendingDelete.value?.name ?? '未选择目录' }}”。目录内仍有资源或子目录时会阻止删除。
@@ -247,7 +269,6 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { FolderSearch2 } from 'lucide-vue-next';
 import MediaAssetGrid from '~/components/admin/media/MediaAssetGrid.vue';
 import MediaAssetTable from '~/components/admin/media/MediaAssetTable.vue';
 import MediaBulkToolbar from '~/components/admin/media/MediaBulkToolbar.vue';

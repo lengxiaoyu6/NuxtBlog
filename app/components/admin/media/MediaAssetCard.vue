@@ -1,6 +1,6 @@
 <template>
   <article
-    class="group overflow-hidden rounded-[1.5rem] border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
+    class="admin-theme-card group overflow-hidden rounded-[1.5rem] border border-slate-100 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
     :class="selected ? 'ring-2 ring-brand-500/50' : ''"
   >
     <div class="relative">
@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { Check, Circle, Eye, FileText } from 'lucide-vue-next';
+import { Check, Circle, Eye, FileText } from '~/utils/admin-lucide-icons';
 import type { MediaAsset } from '~/types/admin-media';
 
 defineProps<{

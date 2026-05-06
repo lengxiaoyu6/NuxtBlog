@@ -1,17 +1,18 @@
 <template>
   <div class="space-y-8 pb-20">
-    <section class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <UCard :ui="{ root: 'admin-theme-card rounded-[2rem] border-slate-200 dark:border-slate-800', body: 'p-5 sm:p-6' }">
       <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div class="space-y-3">
           <NuxtLink
             to="/admin/modules"
             class="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
           >
-            <ArrowLeft :size="16" />
+            <UIcon name="i-lucide-arrow-left" class="size-4" />
             返回模块插件
           </NuxtLink>
 
           <div class="flex flex-wrap items-center gap-3">
+            <UIcon name="i-lucide-package" class="size-7 text-brand-600 dark:text-brand-300" />
             <h1 class="font-serif text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               {{ moduleInfo?.name || fallbackModuleName || '模块详情' }}
             </h1>
@@ -41,60 +42,61 @@
         </div>
 
         <div v-if="moduleInfo" class="flex flex-wrap gap-3 xl:justify-end">
-          <button
+          <UButton
             v-if="!moduleInfo.installed"
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 text-sm font-bold text-white shadow-lg shadow-brand-500/25 transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
+            :loading="pendingModuleAction === 'install'"
+            :icon="pendingModuleAction === 'install' ? undefined : 'i-lucide-download'"
+            class="justify-center"
             :disabled="Boolean(pendingModuleAction)"
             @click="submitModuleAction('install')"
           >
-            <LoaderCircle v-if="pendingModuleAction === 'install'" :size="16" class="animate-spin" />
-            <Download v-else :size="16" />
             安装模块
-          </button>
+          </UButton>
 
-          <button
+          <UButton
             v-else-if="!moduleInfo.enabled"
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition-all hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:shadow-none dark:disabled:bg-slate-700 dark:disabled:text-slate-300"
+            color="info"
+            :loading="pendingModuleAction === 'enable'"
+            :icon="pendingModuleAction === 'enable' ? undefined : 'i-lucide-power'"
+            class="justify-center"
             :disabled="Boolean(pendingModuleAction)"
             @click="submitModuleAction('enable')"
           >
-            <LoaderCircle v-if="pendingModuleAction === 'enable'" :size="16" class="animate-spin" />
-            <Power v-else :size="16" />
             启用模块
-          </button>
+          </UButton>
 
-          <button
+          <UButton
             v-else
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-bold text-amber-700 transition-colors hover:border-amber-300 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200"
+            color="warning"
+            variant="soft"
+            :loading="pendingModuleAction === 'disable'"
+            :icon="pendingModuleAction === 'disable' ? undefined : 'i-lucide-circle-off'"
+            class="justify-center"
             :disabled="Boolean(pendingModuleAction)"
             @click="submitModuleAction('disable')"
           >
-            <LoaderCircle v-if="pendingModuleAction === 'disable'" :size="16" class="animate-spin" />
-            <CircleOff v-else :size="16" />
             停用模块
-          </button>
+          </UButton>
 
-          <button
+          <UButton
             v-if="moduleInfo.installed"
-            type="button"
-            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-700 transition-colors hover:border-rose-300 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200"
+            color="error"
+            variant="soft"
+            :loading="pendingModuleAction === 'uninstall'"
+            :icon="pendingModuleAction === 'uninstall' ? undefined : 'i-lucide-trash-2'"
+            class="justify-center"
             :disabled="Boolean(pendingModuleAction)"
             @click="submitModuleAction('uninstall')"
           >
-            <LoaderCircle v-if="pendingModuleAction === 'uninstall'" :size="16" class="animate-spin" />
-            <Trash2 v-else :size="16" />
             卸载模块
-          </button>
+          </UButton>
         </div>
       </div>
-    </section>
+    </UCard>
 
     <section
       v-if="pageState === 'loading'"
-      class="flex min-h-[18rem] items-center justify-center rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      class="admin-theme-card flex min-h-[18rem] items-center justify-center rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
     >
       <div class="inline-flex items-center gap-3 text-sm font-bold text-slate-500 dark:text-slate-300">
         <LoaderCircle :size="18" class="animate-spin" />
@@ -104,7 +106,7 @@
 
     <section
       v-else-if="pageState === 'error'"
-      class="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 shadow-sm dark:border-rose-900/50 dark:bg-rose-950/20"
+      class="admin-theme-card rounded-[2rem] border border-rose-200 bg-rose-50 p-6 shadow-sm dark:border-rose-900/50 dark:bg-rose-950/20"
     >
       <div class="flex items-start gap-3 text-rose-700 dark:text-rose-200">
         <AlertCircle :size="18" class="mt-0.5 shrink-0" />
@@ -116,8 +118,8 @@
     </section>
 
     <template v-else-if="moduleInfo">
-      <section class="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <article class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <article class="admin-theme-card rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div class="mb-5 flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600 dark:bg-brand-900/20 dark:text-brand-300">
               <Package :size="22" />
@@ -152,7 +154,7 @@
           </dl>
         </article>
 
-        <article class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <article class="admin-theme-card rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div class="mb-5 flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
               <BellRing :size="22" />
@@ -175,7 +177,7 @@
       </section>
 
       <template v-if="isNotificationModule">
-        <section class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+        <section class="admin-theme-card rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
           <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div class="flex items-start gap-3">
               <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300">
@@ -217,7 +219,7 @@
                 </div>
               </div>
 
-              <article class="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40">
+              <article class="admin-theme-card rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40">
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white">通知范围</h3>
                 <p class="mt-2 text-sm leading-6 text-slate-500 dark:text-slate-400">
                   当前页面维护管理员待审核提醒、评论收到回复通知与留言待审核提醒。
@@ -249,7 +251,7 @@
                 <div
                   v-for="(recipient, index) in notificationForm.adminRecipients"
                   :key="`notification-recipient-${index}`"
-                  class="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40"
+                  class="admin-theme-card rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40"
                 >
                   <div class="flex flex-col gap-3 lg:flex-row lg:items-start">
                     <div class="min-w-0 flex-1 space-y-2">
@@ -279,12 +281,12 @@
                 </div>
               </div>
 
-              <div v-else class="rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50/80 px-4 py-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-400">
+              <div v-else class="admin-theme-card rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50/80 px-4 py-5 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-400">
                 当前尚未配置管理员收件邮箱。
               </div>
             </div>
 
-            <article class="rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40">
+            <article class="admin-theme-card rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950/40">
               <div class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div class="space-y-2">
                   <h3 class="text-sm font-bold text-slate-900 dark:text-white">测试发信</h3>
@@ -331,7 +333,7 @@
                   </p>
                 </div>
 
-                <div class="rounded-[1.5rem] border border-dashed border-slate-300 bg-white/80 px-4 py-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-400">
+                <div class="admin-theme-card rounded-[1.5rem] border border-dashed border-slate-300 bg-white/80 px-4 py-4 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-400">
                   <p class="font-bold text-slate-900 dark:text-white">已保存管理员邮箱</p>
                   <p v-if="savedNotificationRecipients.length" class="mt-2 leading-6">
                     {{ savedNotificationRecipients.join('、') }}
@@ -354,7 +356,7 @@
         </section>
 
         <section class="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-          <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <article class="admin-theme-card rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
             <div class="mb-6 flex items-center gap-3">
               <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300">
                 <Mail :size="22" />
@@ -495,7 +497,7 @@
             </div>
           </article>
 
-          <article class="rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
+          <article class="admin-theme-card rounded-[2.5rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8">
             <div class="mb-6 flex items-center gap-3">
               <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300">
                 <BellRing :size="22" />
@@ -538,7 +540,7 @@
           </article>
         </section>
 
-        <section class="flex flex-col gap-4 rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+        <section class="admin-theme-card flex flex-col gap-4 rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
           <div class="space-y-1">
             <p class="text-sm font-bold text-slate-900 dark:text-white">{{ notificationSaveBadge.label }}</p>
             <p class="text-sm text-slate-500 dark:text-slate-400">{{ notificationBottomStatusText }}</p>
@@ -570,7 +572,7 @@
 
       <section
         v-else
-        class="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+        class="admin-theme-card rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900"
       >
         <div class="flex items-start gap-3 text-slate-500 dark:text-slate-300">
           <Settings2 :size="18" class="mt-0.5 shrink-0" />
@@ -602,7 +604,7 @@ import {
   Settings2,
   ShieldCheck,
   Trash2,
-} from 'lucide-vue-next';
+} from '~/utils/admin-lucide-icons';
 import { cloneSiteSettings, DEFAULT_SITE_SETTINGS } from '~/constants/site-settings';
 import { useAppToast } from '~/composables/useAppToast';
 import type { AdminSettingsSaveState, SiteNotificationSettings } from '~/types/admin-settings';
@@ -820,7 +822,7 @@ function getNotificationFieldError(field: string) {
 function getNotificationInputClass(field: string) {
   return getNotificationFieldError(field)
     ? 'border-rose-300 focus:border-rose-500 dark:border-rose-800'
-    : 'border-slate-200 dark:border-slate-800';
+    : 'border-slate-200/80 dark:border-slate-700/80';
 }
 
 function validateNotificationForm() {

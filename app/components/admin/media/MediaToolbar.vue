@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutGrid, List, Search } from 'lucide-vue-next';
+import { LayoutGrid, List, Search } from '~/utils/admin-lucide-icons';
 import type { MediaKindFilter, MediaSortMode, MediaTag, MediaViewMode } from '~/types/admin-media';
 
 defineProps<{

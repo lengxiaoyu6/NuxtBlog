@@ -1,100 +1,128 @@
 <template>
-  <div class="space-y-8">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-      <div v-for="stat in stats" :key="stat.label" class="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-center gap-3 sm:gap-4">
-        <div :class="[stat.color, 'p-3 sm:p-4 rounded-xl sm:rounded-2xl']">
-          <component :is="stat.icon" class="text-white w-5 h-5 sm:w-6 sm:h-6" />
+  <div class="space-y-6 pb-20">
+    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <UCard v-for="stat in stats" :key="stat.label" :ui="cardUi">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">{{ stat.label }}</p>
+            <p class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{{ stat.value }}</p>
+          </div>
+          <div class="grid size-11 place-items-center rounded-2xl" :class="stat.color">
+            <UIcon :name="stat.icon" class="size-5 text-white" />
+          </div>
         </div>
-        <div>
-          <p class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">{{ stat.label }}</p>
-          <p class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-serif mt-0.5 sm:mt-1">{{ stat.value }}</p>
-        </div>
-      </div>
-    </div>
+      </UCard>
+    </section>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Quick Actions (Left Side) -->
-      <div class="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col order-last lg:order-first">
-        <h2 class="text-xl font-black text-slate-900 dark:text-white font-serif mb-6">快捷操作</h2>
-        <div class="grid grid-cols-1 gap-4 flex-grow">
-          <NuxtLink v-for="action in quickActions" :key="action.label" :to="action.link" class="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 hover:bg-brand-50 dark:hover:bg-brand-900/20 group transition-all text-left">
-            <div :class="[action.color, 'p-3 rounded-xl text-white group-hover:scale-110 transition-transform']">
-              <component :is="action.icon" :size="20" />
+    <section class="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+      <UCard :ui="panelUi" class="order-last lg:order-first">
+        <template #header>
+          <div>
+            <h2 class="text-xl font-black text-slate-900 dark:text-white">快捷操作</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">常用管理功能入口</p>
+          </div>
+        </template>
+
+        <div class="grid gap-3">
+          <NuxtLink
+            v-for="action in quickActions"
+            :key="action.label"
+            :to="action.link"
+            class="flex items-center gap-4 rounded-2xl bg-slate-50 p-4 text-left transition-all hover:bg-brand-50 dark:bg-slate-800/50 dark:hover:bg-brand-900/20"
+          >
+            <div class="grid size-11 place-items-center rounded-xl text-white" :class="action.color">
+              <UIcon :name="action.icon" class="size-5" />
             </div>
-            <div>
-              <p class="font-bold text-slate-900 dark:text-white text-sm">{{ action.label }}</p>
-              <p class="text-xs text-slate-500">{{ action.desc }}</p>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-bold text-slate-900 dark:text-white">{{ action.label }}</p>
+              <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ action.desc }}</p>
             </div>
           </NuxtLink>
         </div>
-      </div>
+      </UCard>
 
-      <!-- Recent Activity (Right Side) -->
-      <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col min-w-0">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-black text-slate-900 dark:text-white font-serif">最近文章</h2>
-          <NuxtLink to="/admin/posts" class="text-sm font-bold text-brand-600 hover:underline shrink-0">查看全部</NuxtLink>
-        </div>
-        
-        <div class="overflow-x-auto -mx-8 px-8 pb-4 scroll-smooth custom-scrollbar" style="-webkit-overflow-scrolling: touch;">
-          <table class="w-full text-center">
+      <UCard :ui="{ ...panelUi, body: 'p-0' }">
+        <template #header>
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-black text-slate-900 dark:text-white">最近文章</h2>
+              <p class="text-sm text-slate-500 dark:text-slate-400">最近更新的内容记录</p>
+            </div>
+            <UButton to="/admin/posts" color="neutral" variant="ghost" trailing-icon="i-lucide-arrow-right">
+              查看全部
+            </UButton>
+          </div>
+        </template>
+
+        <div class="hidden overflow-x-auto md:block">
+          <table class="w-full min-w-[720px] text-left">
             <thead>
-              <tr class="text-xs font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
-                <th class="pb-4 px-2 text-left whitespace-nowrap">标题</th>
-                <th class="pb-4 px-2 whitespace-nowrap">日期</th>
-                <th class="pb-4 px-2 whitespace-nowrap">状态</th>
-                <th class="pb-4 px-2 whitespace-nowrap text-right">操作</th>
+              <tr class="border-b border-slate-100 bg-slate-50/80 text-xs font-bold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                <th class="px-6 py-4">标题</th>
+                <th class="px-4 py-4">日期</th>
+                <th class="px-4 py-4">状态</th>
+                <th class="px-6 py-4 text-right">操作</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/50">
-              <tr v-for="post in recentPosts" :key="post.id" class="group">
-                <td class="py-4 px-2 text-left min-w-[150px] max-w-[200px] sm:max-w-xs transition-colors group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/20">
-                  <div class="font-bold text-slate-900 dark:text-white group-hover:text-brand-600 transition-colors cursor-pointer text-sm truncate">
-                    {{ post.title }}
-                  </div>
+            <tbody class="divide-y divide-slate-50 dark:divide-slate-800/70">
+              <tr v-for="post in recentPosts" :key="post.id" class="hover:bg-slate-50/70 dark:hover:bg-slate-800/20">
+                <td class="px-6 py-4">
+                  <p class="max-w-md truncate text-sm font-bold text-slate-900 dark:text-white">{{ post.title }}</p>
                 </td>
-                <td class="py-4 px-2 text-slate-500 text-sm whitespace-nowrap">{{ post.updatedAt }}</td>
-                <td class="py-4 px-2 whitespace-nowrap">
-                  <span :class="[
-                    post.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600',
-                    'px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider inline-block'
-                  ]">
+                <td class="px-4 py-4 text-sm text-slate-500 dark:text-slate-400">{{ post.updatedAt }}</td>
+                <td class="px-4 py-4">
+                  <UBadge :color="post.status === 'published' ? 'success' : 'warning'" variant="soft">
                     {{ post.status === 'published' ? '已发布' : '草稿' }}
-                  </span>
+                  </UBadge>
                 </td>
-                <td class="py-4 px-2 whitespace-nowrap text-right transition-colors group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/20">
-                  <NuxtLink
+                <td class="px-6 py-4 text-right">
+                  <UButton
                     :to="{ path: '/admin/posts/new', query: { id: post.id } }"
-                    class="p-2 text-slate-400 hover:text-brand-600 transition-colors inline-block"
-                  >
-                    <Edit3 :size="16" />
-                  </NuxtLink>
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    icon="i-lucide-pencil"
+                    aria-label="编辑文章"
+                  />
                 </td>
               </tr>
               <tr v-if="recentPosts.length === 0">
-                <td colspan="4" class="px-2 py-8 text-center text-sm text-slate-500 dark:text-slate-400">暂无文章记录</td>
+                <td colspan="4" class="px-6 py-12 text-center text-sm text-slate-500 dark:text-slate-400">暂无文章记录</td>
               </tr>
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+
+        <div class="divide-y divide-slate-100 dark:divide-slate-800 md:hidden">
+          <article v-for="post in recentPosts" :key="post.id" class="space-y-3 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <h3 class="line-clamp-2 text-sm font-bold text-slate-900 dark:text-white">{{ post.title }}</h3>
+              <UBadge :color="post.status === 'published' ? 'success' : 'warning'" variant="soft">
+                {{ post.status === 'published' ? '已发布' : '草稿' }}
+              </UBadge>
+            </div>
+            <div class="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <span>{{ post.updatedAt }}</span>
+              <UButton
+                :to="{ path: '/admin/posts/new', query: { id: post.id } }"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                icon="i-lucide-pencil"
+              >
+                编辑
+              </UButton>
+            </div>
+          </article>
+          <div v-if="recentPosts.length === 0" class="p-10 text-center text-sm text-slate-500 dark:text-slate-400">暂无文章记录</div>
+        </div>
+      </UCard>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import {
-  Clock3,
-  Eye,
-  FileText,
-  MessageSquare,
-  Plus,
-  Image as ImageIcon,
-  Settings,
-  Edit3,
-  ExternalLink
-} from 'lucide-vue-next';
 import type { AdminDashboardSummary } from '~/types/post';
 
 definePageMeta({
@@ -105,6 +133,9 @@ const compactNumberFormatter = new Intl.NumberFormat('en', {
   notation: 'compact',
   maximumFractionDigits: 1,
 });
+
+const cardUi = { root: 'rounded-[1.75rem] border-slate-200 dark:border-slate-800', body: 'p-5 sm:p-6' };
+const panelUi = { root: 'rounded-[2rem] border-slate-200 dark:border-slate-800 overflow-hidden', body: 'p-5 sm:p-6' };
 
 function createEmptyDashboardSummary(): AdminDashboardSummary {
   return {
@@ -133,51 +164,18 @@ const { data: dashboard } = await useAsyncData<AdminDashboardSummary>('admin-das
 });
 
 const stats = computed(() => [
-  { label: '总文章', value: formatStatValue(dashboard.value.stats.totalPosts), icon: FileText, color: 'bg-blue-500' },
-  { label: '总评论', value: formatStatValue(dashboard.value.stats.totalComments), icon: MessageSquare, color: 'bg-purple-500' },
-  { label: '总阅读', value: formatStatValue(dashboard.value.stats.totalViews), icon: Eye, color: 'bg-brand-600' },
-  { label: '待审核评论', value: formatStatValue(dashboard.value.stats.pendingComments), icon: Clock3, color: 'bg-orange-500' },
+  { label: '总文章', value: formatStatValue(dashboard.value.stats.totalPosts), icon: 'i-lucide-file-text', color: 'bg-blue-500' },
+  { label: '总评论', value: formatStatValue(dashboard.value.stats.totalComments), icon: 'i-lucide-message-square', color: 'bg-purple-500' },
+  { label: '总阅读', value: formatStatValue(dashboard.value.stats.totalViews), icon: 'i-lucide-eye', color: 'bg-brand-600' },
+  { label: '待审核评论', value: formatStatValue(dashboard.value.stats.pendingComments), icon: 'i-lucide-clock-3', color: 'bg-orange-500' },
 ]);
 
 const recentPosts = computed(() => dashboard.value.recentPosts);
 
 const quickActions = [
-  { label: '发布文章', desc: '撰写并发布新内容', icon: Plus, color: 'bg-brand-600', link: '/admin/posts/new' },
-  { label: '上传媒体', desc: '管理图片与文件', icon: ImageIcon, color: 'bg-blue-500', link: '/admin/media' },
-  { label: '站点预览', desc: '查看前端显示效果', icon: ExternalLink, color: 'bg-purple-500', link: '/' },
-  { label: '偏好设置', desc: '调整后台管理选项', icon: Settings, color: 'bg-slate-600', link: '/admin/settings' },
+  { label: '发布文章', desc: '撰写并发布新内容', icon: 'i-lucide-plus', color: 'bg-brand-600', link: '/admin/posts/new' },
+  { label: '上传媒体', desc: '管理图片与文件', icon: 'i-lucide-image', color: 'bg-blue-500', link: '/admin/media' },
+  { label: '站点预览', desc: '查看前端显示效果', icon: 'i-lucide-external-link', color: 'bg-purple-500', link: '/' },
+  { label: '偏好设置', desc: '调整后台管理选项', icon: 'i-lucide-settings', color: 'bg-slate-600', link: '/admin/settings' },
 ];
 </script>
-
-<style scoped>
-/* 自定义极简滚动条 */
-.custom-scrollbar::-webkit-scrollbar {
-  height: 4px; /* 横向滚动条高度非常小 */
-  width: 4px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent; /* 轨道透明 */
-  margin: 0 32px; /* 避免滚动条顶到边缘，与父级 px-8 (32px) 对齐 */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1; /* slate-300，浅色提示 */
-  border-radius: 4px; /* 圆角设计 */
-  opacity: 0.5;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8; /* slate-400，悬浮加深 */
-}
-
-/* 适配暗黑模式 */
-@media (prefers-color-scheme: dark) {
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #334155; /* slate-700 */
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #475569; /* slate-600 */
-  }
-}
-</style>
