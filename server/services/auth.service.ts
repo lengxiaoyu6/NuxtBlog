@@ -60,7 +60,10 @@ export async function verifyAdminCredentials(username: string, password: string)
     return null;
   }
 
-  return toAdminSessionUser(adminUser);
+  return toAdminSessionUser({
+    ...adminUser,
+    mustChangePassword: adminUser.mustChangePassword || (username === DEFAULT_ADMIN_USERNAME && password === DEFAULT_ADMIN_PASSWORD),
+  });
 }
 
 export async function changeAdminPassword(adminUserId: number, password: string, confirmPassword: string) {

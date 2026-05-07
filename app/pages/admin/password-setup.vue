@@ -11,6 +11,7 @@
           v-model="form.password"
           type="password"
           icon="i-lucide-key-round"
+          class="w-full"
           size="xl"
           required
           autocomplete="new-password"
@@ -24,6 +25,7 @@
           v-model="form.confirmPassword"
           type="password"
           icon="i-lucide-lock-keyhole"
+          class="w-full"
           size="xl"
           required
           autocomplete="new-password"
